@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProofMate - Linear Algebra Solution Verification</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo">ProofMate</div>
+        <div class="header-right">
+            <nav>
+                <ul>
+                    <li><a href="#services">Features</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#pricing">Pricing</a></li>
+                    <li><a href="#testimonials">Testimonials</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+            <div class="header-controls">
+                <div class="auth-buttons">
+                    <button id="loginBtn" class="btn btn-outline">LOG IN</button>
+                    <button id="registerBtn" class="btn">REGISTER</button>
+                </div>
+                <div class="language-selector">
+                    <a href="#" class="active">EN</a>
+                    <a href="#">FR</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Auth Modal -->
+    <div class="modal-overlay" id="authModal">
+        <div class="auth-modal">
+            <div class="modal-header">
+                <div class="modal-tabs">
+                    <button class="modal-tab active" data-tab="login">Login</button>
+                    <button class="modal-tab" data-tab="register">Register</button>
+                </div>
+                <button class="modal-close">&times;</button>
+            </div>
+            
+            <div class="modal-content">
+                <!-- Login Form -->
+                <form id="loginForm" class="auth-form active">
+                    <div class="form-header">
+                        <h2>Welcome Back</h2>
+                        <p>Login to your ProofMate account</p>
+                    </div>
+                    
+                    <div class="role-toggle">
+                        <button type="button" class="role-btn active" data-role="student">Student</button>
+                        <button type="button" class="role-btn" data-role="teacher">Teacher</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="login-email" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="login-password" required>
+                            <button type="button" class="toggle-password"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-options">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="remember-me">
+                            <span class="checkmark"></span>
+                            Remember me
+                        </label>
+                        <a href="#" class="forgot-password">Forgot password?</a>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-full">Log In</button>
+                    
+                    <div class="form-footer">
+                        <p>Don't have an account? <a href="#" class="switch-form" data-form="register">Register now</a></p>
+                    </div>
+                </form>
+                
+                <!-- Registration Form -->
+                <form id="registerForm" class="auth-form">
+                    <div class="form-header">
+                        <h2>Create Account</h2>
+                        <p>Join ProofMate and start verifying your solutions</p>
+                    </div>
+                    
+                    <div class="role-toggle">
+                        <button type="button" class="role-btn active" data-role="student">Student</button>
+                        <button type="button" class="role-btn" data-role="teacher">Teacher</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-name">Full Name</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="register-name" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-email">Email</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="register-email" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-password">Password</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="register-password" required>
+                            <button type="button" class="toggle-password"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group teacher-field" style="display: none;">
+                        <label for="register-institution">Institution</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-university"></i>
+                            <input type="text" id="register-institution">
+                        </div>
+                    </div>
+                    
+                    <div class="form-options">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="agree-terms" required>
+                            <span class="checkmark"></span>
+                            I agree to the <a href="#">Terms & Conditions</a>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-full">Create Account</button>
+                    
+                    <div class="form-footer">
+                        <p>Already have an account? <a href="#" class="switch-form" data-form="login">Log in</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <section class="hero">
+        <div class="overlay"></div>
+        <div class="hero-content">
+            <h1 class="brand-name">PROOFMATE</h1>
+            <div class="tagline">PERFECT. PRECISE. PROFESSIONAL.</div>
+        </div>
+        <div class="scroll-indicator">
+            <div class="scroll-icon"></div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="section"> 
+        <div class="container">
+            <h2 class="section-title fade-in">Our Features</h2>
+            <div class="services-grid">
+                <div class="service-card fade-in">
+                    <div class="service-icon">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                    <h3>Matrix Operations</h3>
+                    <p>Advanced verification of matrix operations, determinants, and eigenvalue solutions in your Jupyter notebooks.</p>
+                </div>
+                <div class="service-card fade-in">
+                    <div class="service-icon">
+                        <i class="fas fa-vector-square"></i>
+                    </div>
+                    <h3>Vector Spaces</h3>
+                    <p>Analyze vector space solutions, basis verification, and dimension calculations with detailed feedback.</p>
+                </div>
+                <div class="service-card fade-in">
+                    <div class="service-icon">
+                        <i class="fas fa-laptop-code"></i>
+                    </div>
+                    <h3>Jupyter Integration</h3>
+                    <p>Seamless processing of .ipynb notebooks with full support for LaTeX and Python code verification.</p>
+                </div>
+                <div class="service-card fade-in">
+                    <div class="service-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Linear Transformations</h3>
+                    <p>Comprehensive verification of linear transformations, including kernel and image analysis.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="section">
+        <div class="container">
+            <div class="about-grid">
+                <div class="about-content fade-in">
+                    <h2 class="section-title">About ProofMate</h2>
+                    <p>ProofMate is an innovative web service for automatic verification of solutions to linear algebra problems, designed specifically for educators and students working with Jupyter notebooks.</p>
+                    <p>Our advanced verification algorithms analyze step-by-step solutions in .ipynb format, providing detailed feedback, error detection, and suggested corrections for matrices, vector spaces, linear transformations, and more.</p>
+                    <div class="stats">
+                        <div class="stat">
+                            <span class="stat-number">99.8%</span>
+                            <span class="stat-label">Accuracy</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">10,000+</span>
+                            <span class="stat-label">Submissions</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">500+</span>
+                            <span class="stat-label">Universities</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-image fade-in">
+                    <div class="image-placeholder"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="section">
+        <div class="container">
+            <h2 class="section-title fade-in">Our Pricing</h2>
+            <div class="pricing-grid">
+                <div class="pricing-card fade-in">
+                    <div class="pricing-header">
+                        <h3>Student</h3>
+                        <div class="price">$9<span>/month</span></div>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>Jupyter Notebook Upload</li>
+                        <li>Basic Error Detection</li>
+                        <li>Matrix Operation Verification</li>
+                        <li>Up to 30 Submissions/Month</li>
+                        <li class="not-included">Step-by-Step Feedback</li>
+                        <li class="not-included">Batch Processing</li>
+                    </ul>
+                    <a href="#contact" class="btn">Get Started</a>
+                </div>
+                <div class="pricing-card featured fade-in">
+                    <div class="pricing-header">
+                        <h3>Professional</h3>
+                        <div class="price">$29<span>/month</span></div>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>Jupyter Notebook Upload</li>
+                        <li>Advanced Error Detection</li>
+                        <li>Full Linear Algebra Coverage</li>
+                        <li>Unlimited Submissions</li>
+                        <li>Step-by-Step Feedback</li>
+                        <li class="not-included">Batch Processing</li>
+                    </ul>
+                    <a href="#contact" class="btn">Get Started</a>
+                </div>
+                <div class="pricing-card fade-in">
+                    <div class="pricing-header">
+                        <h3>Institution</h3>
+                        <div class="price">$99<span>/month</span></div>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>Jupyter Notebook Upload</li>
+                        <li>Advanced Error Detection</li>
+                        <li>Full Linear Algebra Coverage</li>
+                        <li>Unlimited Submissions</li>
+                        <li>Step-by-Step Feedback</li>
+                        <li>Batch Processing</li>
+                    </ul>
+                    <a href="#contact" class="btn">Get Started</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="section">
+        <div class="container">
+            <h2 class="section-title fade-in">Contact Us</h2>
+            <div class="contact-grid">
+                <div class="contact-info fade-in">
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <p>info@proofmate.com</p>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <p>+1 (800) 123-4567</p>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <p>123 Math Avenue, Suite 101<br>Matrix City, MC 12345</p>
+                    </div>
+                </div>
+                <form class="contact-form fade-in">
+                    <div class="form-group">
+                        <input type="text" placeholder="Your Name" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" placeholder="Your Email" required>
+                    </div>
+                    <div class="form-group">
+                        <select>
+                            <option value="" disabled selected>Select Service</option>
+                            <option value="matrices">Matrix Operations</option>
+                            <option value="vectors">Vector Spaces</option>
+                            <option value="jupyter">Jupyter Integration</option>
+                            <option value="transforms">Linear Transformations</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <textarea placeholder="Your Message" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="btn">Send Message</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">ProofMate</div>
+                <div class="footer-links">
+                    <a href="#services">Features</a>
+                    <a href="#about">About</a>
+                    <a href="#pricing">Pricing</a>
+                    <a href="#testimonials">Testimonials</a>
+                    <a href="#contact">Contact</a>
+                </div>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+            <div class="copyright">
+                &copy; 2023 ProofMate. All rights reserved.
+            </div>
+        </div>
+    </footer>
+    
+    <script src="script.js"></script>
+    <script src="auth.js"></script>
+</body>
+</html> 
