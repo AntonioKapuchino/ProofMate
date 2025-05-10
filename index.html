@@ -25,8 +25,8 @@
             </nav>
             <div class="header-controls">
                 <div class="auth-buttons">
-                    <button id="loginBtn" class="btn btn-outline">LOG IN</button>
-                    <button id="registerBtn" class="btn">REGISTER</button>
+                    <button id="loginBtn" class="btn btn-outline login-btn">LOG IN</button>
+                    <button id="registerBtn" class="btn register-btn">REGISTER</button>
                 </div>
                 <div class="language-selector">
                     <a href="#" class="active">EN</a>
@@ -36,123 +36,97 @@
         </div>
     </header>
 
-    <!-- Auth Modal -->
-    <div class="modal-overlay" id="authModal">
-        <div class="auth-modal">
-            <div class="modal-header">
-                <div class="modal-tabs">
-                    <button class="modal-tab active" data-tab="login">Login</button>
-                    <button class="modal-tab" data-tab="register">Register</button>
-                </div>
-                <button class="modal-close">&times;</button>
+    <!-- Модальное окно авторизации -->
+    <div class="auth-modal" id="authModal">
+        <div class="auth-modal-content">
+            <button class="auth-modal-close" id="authModalClose">&times;</button>
+            
+            <!-- Табы для переключения между входом и регистрацией -->
+            <div class="auth-tabs">
+                <div class="auth-tab active" id="loginTab">LOG IN</div>
+                <div class="auth-tab" id="registerTab">REGISTER</div>
             </div>
             
-            <div class="modal-content">
-                <!-- Login Form -->
-                <form id="loginForm" class="auth-form active">
-                    <div class="form-header">
-                        <h2>Welcome Back</h2>
-                        <p>Login to your ProofMate account</p>
-                    </div>
-                    
-                    <div class="role-toggle">
-                        <button type="button" class="role-btn active" data-role="student">Student</button>
-                        <button type="button" class="role-btn" data-role="teacher">Teacher</button>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="login-email">Email</label>
-                        <div class="input-with-icon">
-                            <i class="fas fa-envelope"></i>
-                            <input type="email" id="login-email" required>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="login-password">Password</label>
-                        <div class="input-with-icon">
-                            <i class="fas fa-lock"></i>
-                            <input type="password" id="login-password" required>
-                            <button type="button" class="toggle-password"><i class="fas fa-eye"></i></button>
-                        </div>
-                    </div>
-                    
-                    <div class="form-options">
-                        <label class="checkbox-container">
-                            <input type="checkbox" id="remember-me">
-                            <span class="checkmark"></span>
-                            Remember me
-                        </label>
-                        <a href="#" class="forgot-password">Forgot password?</a>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-full">Log In</button>
-                    
-                    <div class="form-footer">
-                        <p>Don't have an account? <a href="#" class="switch-form" data-form="register">Register now</a></p>
-                    </div>
-                </form>
+            <!-- Форма входа -->
+            <form id="loginForm" class="auth-form active">
+                <h2 class="auth-title">Welcome Back!</h2>
+                <p class="auth-subtitle">Please log in to your account</p>
                 
-                <!-- Registration Form -->
-                <form id="registerForm" class="auth-form">
-                    <div class="form-header">
-                        <h2>Create Account</h2>
-                        <p>Join ProofMate and start verifying your solutions</p>
-                    </div>
-                    
-                    <div class="role-toggle">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" placeholder="Enter your email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                </div>
+                
+                <div class="form-group role-selection">
+                    <label>I am a:</label>
+                    <div class="role-buttons">
                         <button type="button" class="role-btn active" data-role="student">Student</button>
                         <button type="button" class="role-btn" data-role="teacher">Teacher</button>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="register-name">Full Name</label>
-                        <div class="input-with-icon">
-                            <i class="fas fa-user"></i>
-                            <input type="text" id="register-name" required>
-                        </div>
+                </div>
+                
+                <div class="form-options">
+                    <div class="remember-me">
+                        <input type="checkbox" id="rememberMe">
+                        <label for="rememberMe">Remember me</label>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="register-email">Email</label>
-                        <div class="input-with-icon">
-                            <i class="fas fa-envelope"></i>
-                            <input type="email" id="register-email" required>
-                        </div>
+                    <a href="#" class="forgot-password">Forgot password?</a>
+                </div>
+                
+                <button type="submit" class="auth-submit">LOG IN</button>
+                
+                <div class="auth-message" id="loginMessage"></div>
+            </form>
+            
+            <!-- Форма регистрации -->
+            <form id="registerForm" class="auth-form">
+                <h2 class="auth-title">Create Account</h2>
+                <p class="auth-subtitle">Join our learning platform</p>
+                
+                <div class="form-group">
+                    <label for="registerName">Full Name</label>
+                    <input type="text" id="registerName" placeholder="Enter your full name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="registerEmail">Email</label>
+                    <input type="email" id="registerEmail" placeholder="Enter your email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" placeholder="Create a password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" placeholder="Confirm your password" required>
+                </div>
+                
+                <div class="form-group role-selection">
+                    <label>I am a:</label>
+                    <div class="role-buttons">
+                        <button type="button" class="role-btn active" data-role="student">Student</button>
+                        <button type="button" class="role-btn" data-role="teacher">Teacher</button>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="register-password">Password</label>
-                        <div class="input-with-icon">
-                            <i class="fas fa-lock"></i>
-                            <input type="password" id="register-password" required>
-                            <button type="button" class="toggle-password"><i class="fas fa-eye"></i></button>
-                        </div>
+                </div>
+                
+                <div class="form-options">
+                    <div class="remember-me">
+                        <input type="checkbox" id="agreeTerms" required>
+                        <label for="agreeTerms">I agree to the <a href="#">Terms and Conditions</a></label>
                     </div>
-                    
-                    <div class="form-group teacher-field" style="display: none;">
-                        <label for="register-institution">Institution</label>
-                        <div class="input-with-icon">
-                            <i class="fas fa-university"></i>
-                            <input type="text" id="register-institution">
-                        </div>
-                    </div>
-                    
-                    <div class="form-options">
-                        <label class="checkbox-container">
-                            <input type="checkbox" id="agree-terms" required>
-                            <span class="checkmark"></span>
-                            I agree to the <a href="#">Terms & Conditions</a>
-                        </label>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-full">Create Account</button>
-                    
-                    <div class="form-footer">
-                        <p>Already have an account? <a href="#" class="switch-form" data-form="login">Log in</a></p>
-                    </div>
-                </form>
-            </div>
+                </div>
+                
+                <button type="submit" class="auth-submit">REGISTER</button>
+                
+                <div class="auth-message" id="registerMessage"></div>
+            </form>
         </div>
     </div>
 
@@ -237,52 +211,83 @@
     <!-- Pricing Section -->
     <section id="pricing" class="section">
         <div class="container">
-            <h2 class="section-title fade-in">Our Pricing</h2>
-            <div class="pricing-grid">
-                <div class="pricing-card fade-in">
-                    <div class="pricing-header">
-                        <h3>Student</h3>
-                        <div class="price">$9<span>/month</span></div>
+            <h2 class="section-title fade-in">Key Features Showcase</h2>
+            <div class="features-showcase">
+                <div class="feature-card fade-in" data-animation="slide-up">
+                    <div class="feature-visual">
+                        <div class="matrix-animation">
+                            <div class="matrix-grid">
+                                <span>2</span><span>4</span><span>1</span>
+                                <span>3</span><span>1</span><span>5</span>
+                                <span>0</span><span>2</span><span>6</span>
+                            </div>
+                            <div class="matrix-operations">
+                                <div class="operation-icon"><i class="fas fa-calculator"></i></div>
+                            </div>
+                            <div class="matrix-result">
+                                <span class="correct">✓</span>
+                            </div>
+                        </div>
                     </div>
-                    <ul class="pricing-features">
-                        <li>Jupyter Notebook Upload</li>
-                        <li>Basic Error Detection</li>
-                        <li>Matrix Operation Verification</li>
-                        <li>Up to 30 Submissions/Month</li>
-                        <li class="not-included">Step-by-Step Feedback</li>
-                        <li class="not-included">Batch Processing</li>
-                    </ul>
-                    <a href="#contact" class="btn">Get Started</a>
+                    <div class="feature-description">
+                        <h3>Matrix Operation Verification</h3>
+                        <p>Instantly verify complex matrix operations including determinants, eigenvalues, and matrix transformations with step-by-step breakdown.</p>
+                        <a href="#contact" class="btn feature-btn">Learn More</a>
+                    </div>
                 </div>
-                <div class="pricing-card featured fade-in">
-                    <div class="pricing-header">
-                        <h3>Professional</h3>
-                        <div class="price">$29<span>/month</span></div>
+                
+                <div class="feature-card fade-in" data-animation="slide-right">
+                    <div class="feature-description">
+                        <h3>Intelligent Error Detection</h3>
+                        <p>Our advanced algorithms pinpoint exactly where errors occur in your solutions and provide helpful suggestions for correction.</p>
+                        <a href="#contact" class="btn feature-btn">Learn More</a>
                     </div>
-                    <ul class="pricing-features">
-                        <li>Jupyter Notebook Upload</li>
-                        <li>Advanced Error Detection</li>
-                        <li>Full Linear Algebra Coverage</li>
-                        <li>Unlimited Submissions</li>
-                        <li>Step-by-Step Feedback</li>
-                        <li class="not-included">Batch Processing</li>
-                    </ul>
-                    <a href="#contact" class="btn">Get Started</a>
+                    <div class="feature-visual">
+                        <div class="error-detection-animation">
+                            <div class="code-snippet">
+                                <div class="code-line"><span class="line-number">1</span><span class="code-content">def matrix_rank(A):</span></div>
+                                <div class="code-line"><span class="line-number">2</span><span class="code-content">    U, s, V = np.linalg.svd(A)</span></div>
+                                <div class="code-line error"><span class="line-number">3</span><span class="code-content">    return np.sum(s > 1e-10)</span></div>
+                                <div class="code-line"><span class="line-number">4</span><span class="code-content">    # Calculate dimension</span></div>
+                            </div>
+                            <div class="error-highlight">
+                                <span class="error-icon"><i class="fas fa-exclamation-triangle"></i></span>
+                                <span class="error-message">Threshold too large. Consider using 1e-15</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="pricing-card fade-in">
-                    <div class="pricing-header">
-                        <h3>Institution</h3>
-                        <div class="price">$99<span>/month</span></div>
+                
+                <div class="feature-card fade-in" data-animation="slide-up">
+                    <div class="feature-visual">
+                        <div class="notebook-animation">
+                            <div class="notebook-header">
+                                <span class="notebook-title">Vector_Space_Analysis.ipynb</span>
+                            </div>
+                            <div class="notebook-content">
+                                <div class="cell markdown-cell">
+                                    <span>### Basis Verification</span>
+                                </div>
+                                <div class="cell code-cell">
+                                    <div class="cell-input">V = span{v₁, v₂, v₃}</div>
+                                    <div class="cell-output processing">
+                                        <div class="processing-dots">
+                                            <span></span><span></span><span></span>
+                                        </div>
+                                    </div>
+                                    <div class="cell-result">
+                                        <span class="result-badge">Linearly Independent: True</span>
+                                        <span class="result-badge">Spans Space: True</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <ul class="pricing-features">
-                        <li>Jupyter Notebook Upload</li>
-                        <li>Advanced Error Detection</li>
-                        <li>Full Linear Algebra Coverage</li>
-                        <li>Unlimited Submissions</li>
-                        <li>Step-by-Step Feedback</li>
-                        <li>Batch Processing</li>
-                    </ul>
-                    <a href="#contact" class="btn">Get Started</a>
+                    <div class="feature-description">
+                        <h3>Jupyter Notebook Integration</h3>
+                        <p>Seamlessly process and verify your Jupyter notebook solutions with full LaTeX and Python code support for linear algebra proofs.</p>
+                        <a href="#contact" class="btn feature-btn">Learn More</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -357,6 +362,212 @@
     </footer>
     
     <script src="script.js"></script>
-    <script src="auth.js"></script>
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Получаем элементы модального окна
+            const authModal = document.getElementById('authModal');
+            const authModalClose = document.getElementById('authModalClose');
+            const loginTab = document.getElementById('loginTab');
+            const registerTab = document.getElementById('registerTab');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const loginMessage = document.getElementById('loginMessage');
+            const registerMessage = document.getElementById('registerMessage');
+            
+            // Кнопки для открытия модального окна
+            const loginButtons = document.querySelectorAll('.login-btn');
+            const registerButtons = document.querySelectorAll('.register-btn');
+            
+            // Обработчики для кнопок выбора роли
+            const roleButtons = document.querySelectorAll('.role-btn');
+            
+            // Проверка статуса аутентификации
+            if (localStorage.getItem('isLoggedIn') === 'true') {
+                const userRole = localStorage.getItem('userRole');
+                if (userRole === 'student') {
+                    window.location.href = 'student-dashboard.html';
+                } else {
+                    window.location.href = 'teacher-dashboard.html';
+                }
+            }
+            
+            // Функция для открытия модального окна
+            function openAuthModal(activeForm) {
+                authModal.style.display = 'flex';
+                setTimeout(() => {
+                    authModal.classList.add('active');
+                }, 10);
+                
+                if (activeForm === 'login') {
+                    loginTab.classList.add('active');
+                    registerTab.classList.remove('active');
+                    loginForm.classList.add('active');
+                    registerForm.classList.remove('active');
+                } else {
+                    loginTab.classList.remove('active');
+                    registerTab.classList.add('active');
+                    loginForm.classList.remove('active');
+                    registerForm.classList.add('active');
+                }
+            }
+            
+            // Функция для закрытия модального окна
+            function closeAuthModal() {
+                authModal.classList.remove('active');
+                setTimeout(() => {
+                    authModal.style.display = 'none';
+                }, 300);
+                // Очищаем все сообщения об ошибках
+                loginMessage.textContent = '';
+                registerMessage.textContent = '';
+                // Сбрасываем формы
+                loginForm.reset();
+                registerForm.reset();
+            }
+            
+            // Обработчики для кнопок открытия модального окна
+            loginButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    openAuthModal('login');
+                });
+            });
+            
+            registerButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    openAuthModal('register');
+                });
+            });
+            
+            // Обработчик для кнопки закрытия модального окна
+            authModalClose.addEventListener('click', closeAuthModal);
+            
+            // Обработчики для переключения между табами
+            loginTab.addEventListener('click', function() {
+                loginTab.classList.add('active');
+                registerTab.classList.remove('active');
+                loginForm.classList.add('active');
+                registerForm.classList.remove('active');
+            });
+            
+            registerTab.addEventListener('click', function() {
+                loginTab.classList.remove('active');
+                registerTab.classList.add('active');
+                loginForm.classList.remove('active');
+                registerForm.classList.add('active');
+            });
+            
+            // Обработчики для кнопок выбора роли
+            roleButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Находим все кнопки роли в той же форме
+                    const parentForm = this.closest('form');
+                    const roleButtonsInForm = parentForm.querySelectorAll('.role-btn');
+                    
+                    // Убираем класс active со всех кнопок
+                    roleButtonsInForm.forEach(btn => btn.classList.remove('active'));
+                    
+                    // Добавляем класс active текущей кнопке
+                    this.classList.add('active');
+                });
+            });
+            
+            // Обработчик отправки формы входа
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                const roleBtn = loginForm.querySelector('.role-btn.active');
+                const role = roleBtn ? roleBtn.getAttribute('data-role') : 'student';
+                
+                // Сброс сообщения об ошибке
+                loginMessage.textContent = '';
+                loginMessage.className = 'auth-message';
+                
+                // Простая валидация email
+                if (!email.includes('@')) {
+                    loginMessage.textContent = 'Please enter a valid email address.';
+                    loginMessage.classList.add('error');
+                    return;
+                }
+                
+                // Имитация запроса к серверу
+                try {
+                    const result = login(email, password, role);
+                    
+                    if (result) {
+                        loginMessage.textContent = 'Login successful! Redirecting...';
+                        loginMessage.classList.add('success');
+                        
+                        // Перенаправление происходит в функции login
+                    }
+                } catch (error) {
+                    loginMessage.textContent = error.message || 'An error occurred during login.';
+                    loginMessage.classList.add('error');
+                }
+            });
+            
+            // Обработчик отправки формы регистрации
+            registerForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const name = document.getElementById('registerName').value;
+                const email = document.getElementById('registerEmail').value;
+                const password = document.getElementById('registerPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                const agreeTerms = document.getElementById('agreeTerms').checked;
+                const roleBtn = registerForm.querySelector('.role-btn.active');
+                const role = roleBtn ? roleBtn.getAttribute('data-role') : 'student';
+                
+                // Сброс сообщения об ошибке
+                registerMessage.textContent = '';
+                registerMessage.className = 'auth-message';
+                
+                // Простая валидация
+                if (!email.includes('@')) {
+                    registerMessage.textContent = 'Please enter a valid email address.';
+                    registerMessage.classList.add('error');
+                    return;
+                }
+                
+                if (password !== confirmPassword) {
+                    registerMessage.textContent = 'Passwords do not match.';
+                    registerMessage.classList.add('error');
+                    return;
+                }
+                
+                if (!agreeTerms) {
+                    registerMessage.textContent = 'You must agree to the Terms and Conditions.';
+                    registerMessage.classList.add('error');
+                    return;
+                }
+                
+                // Имитация запроса к серверу
+                try {
+                    const result = register(name, email, password, role);
+                    
+                    if (result) {
+                        registerMessage.textContent = 'Registration successful! Redirecting...';
+                        registerMessage.classList.add('success');
+                        
+                        // Перенаправление происходит в функции register
+                    }
+                } catch (error) {
+                    registerMessage.textContent = error.message || 'An error occurred during registration.';
+                    registerMessage.classList.add('error');
+                }
+            });
+            
+            // Закрытие модального окна при клике вне его содержимого
+            window.addEventListener('click', function(e) {
+                if (e.target === authModal) {
+                    closeAuthModal();
+                }
+            });
+        });
+    </script>
 </body>
 </html> 
