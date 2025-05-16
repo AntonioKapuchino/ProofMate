@@ -582,20 +582,20 @@ function updateStudentAssignmentsList(availableAssignments) {
                     const diffDays = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
                     
                     if (diffDays < 0) {
-                        dueStatus = '<span class="status-badge overdue">Overdue</span>';
-                        dueDateLabel = 'Overdue';
+                        dueStatus = '<span class="status-badge overdue">Просрочено</span>';
+                        dueDateLabel = 'Просрочено';
                     } else if (diffDays === 0) {
-                        dueStatus = '<span class="status-badge active">Due Today</span>';
-                        dueDateLabel = 'Due Today';
+                        dueStatus = '<span class="status-badge active">Сдать сегодня</span>';
+                        dueDateLabel = 'Сдать сегодня';
                     } else if (diffDays === 1) {
-                        dueStatus = '<span class="status-badge active">Due Tomorrow</span>';
-                        dueDateLabel = 'Due Tomorrow';
+                        dueStatus = '<span class="status-badge active">Сдать завтра</span>';
+                        dueDateLabel = 'Сдать завтра';
                     } else if (diffDays <= 7) {
-                        dueStatus = '<span class="status-badge active">Due in ' + diffDays + ' days</span>';
-                        dueDateLabel = `Due in ${diffDays} days`;
+                        dueStatus = '<span class="status-badge active">Сдать через ' + diffDays + ' дн.</span>';
+                        dueDateLabel = `Сдать через ${diffDays} дн.`;
                     } else {
-                        dueStatus = '<span class="status-badge active">Active</span>';
-                        dueDateLabel = `Due in ${diffDays} days`;
+                        dueStatus = '<span class="status-badge active">Активно</span>';
+                        dueDateLabel = `Сдать через ${diffDays} дн.`;
                     }
                 }
             }
@@ -615,15 +615,15 @@ function updateStudentAssignmentsList(availableAssignments) {
             </div>
             <p class="assignment-description">${assignment.description || 'No description provided'}</p>
             <div class="assignment-info">
-                <span class="due-date"><i class="fas fa-calendar"></i> Due: ${dueDateStr}</span>
-                <span class="points"><i class="fas fa-star"></i> Max Points: ${assignment.maxPoints || 10}</span>
+                <span class="due-date"><i class="fas fa-calendar"></i> Срок: ${dueDateStr}</span>
+                <span class="points"><i class="fas fa-star"></i> Макс. баллов: ${assignment.maxPoints || 10}</span>
             </div>
-            <div class="assignment-actions">
-                <div class="assignment-details">
-                    <button class="btn btn-outline details-btn" data-assignment-id="${assignment.id}">View Details</button>
-                </div>
-                <button class="upload-btn submit-solution-btn" data-assignment-id="${assignment.id}">
-                    <i class="fas fa-cloud-upload-alt"></i> Submit Solution
+            <div class="assignment-actions" style="background: transparent !important; border-top: none !important; padding: 0 !important; margin-top: 15px !important;">
+                <button class="btn btn-outline details-btn" data-assignment-id="${assignment.id}" style="background-color: rgba(255, 255, 255, 0.1) !important; color: white !important;">
+                    <i class="fas fa-eye"></i> ПОДРОБНОСТИ
+                </button>
+                <button class="upload-btn submit-solution-btn" data-assignment-id="${assignment.id}" style="background-color: #e74c3c !important; color: white !important;">
+                    <i class="fas fa-cloud-upload-alt"></i> ОТПРАВИТЬ РЕШЕНИЕ
                 </button>
             </div>
         `;
@@ -677,7 +677,7 @@ function updateStudentSubmissionsList(studentSubmissions) {
         submissionsList.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-file-alt"></i>
-                <p>You have not submitted any assignments yet.</p>
+                <p>Вы еще не отправили ни одного задания.</p>
             </div>
         `;
         console.log("No submissions found, displaying empty state");
@@ -704,13 +704,13 @@ function updateStudentSubmissionsList(studentSubmissions) {
         let statusBadge = '';
         switch (submission.status) {
             case 'pending':
-                statusBadge = '<span class="status-badge pending">Pending Review</span>';
+                statusBadge = '<span class="status-badge pending">Ожидает проверки</span>';
                 break;
             case 'reviewed':
-                statusBadge = '<span class="status-badge completed">Reviewed</span>';
+                statusBadge = '<span class="status-badge completed">Проверено</span>';
                 break;
             default:
-                statusBadge = '<span class="status-badge">Unknown</span>';
+                statusBadge = '<span class="status-badge">Неизвестно</span>';
         }
         
         // Создаем карточку отправки
@@ -725,23 +725,28 @@ function updateStudentSubmissionsList(studentSubmissions) {
             <div class="submission-details">
                 <div class="submission-detail">
                     <i class="fas fa-calendar"></i>
-                    <span>Submitted: ${new Date(submission.submittedAt).toLocaleDateString()}</span>
+                    <span>Отправлено: ${new Date(submission.submittedAt).toLocaleDateString()}</span>
                 </div>
                 <div class="submission-detail">
                     <i class="fas fa-file-code"></i>
-                    <span>Solution: ${submission.solutionFile || 'No file'}</span>
+                    <span>Решение: ${submission.solutionFile || 'Нет файла'}</span>
                 </div>
                 ${submission.status === 'reviewed' ? `
                     <div class="submission-detail score">
                         <i class="fas fa-star"></i>
-                        <span>Score: ${submission.score}/10</span>
+                        <span>Оценка: ${submission.score}/10</span>
                     </div>
                 ` : ''}
             </div>
-            <div class="submission-actions">
-                <button class="btn btn-secondary view-submission-btn" data-id="${submission.id}">
-                    View Details
+            <div class="submission-actions" style="background: transparent !important; border-top: none !important; padding: 0 !important; margin-top: 15px !important;">
+                <button class="btn btn-outline view-details-btn" data-submission-id="${submission.id}" data-assignment-id="${submission.assignmentId}" style="background-color: rgba(255, 255, 255, 0.1) !important; color: white !important;">
+                    <i class="fas fa-eye"></i> ПОДРОБНОСТИ
                 </button>
+                ${submission.status === 'reviewed' ? `
+                    <button class="btn btn-primary view-report-btn" data-submission-id="${submission.id}" style="background-color: #e74c3c !important; color: white !important;">
+                        <i class="fas fa-file-alt"></i> ОТЧЕТ
+                    </button>
+                ` : ''}
             </div>
         `;
         
@@ -749,9 +754,9 @@ function updateStudentSubmissionsList(studentSubmissions) {
     });
     
     // Добавляем обработчики для кнопок просмотра
-    document.querySelectorAll('.view-submission-btn').forEach(btn => {
+    document.querySelectorAll('.view-details-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            const submissionId = parseInt(this.getAttribute('data-id'));
+            const submissionId = parseInt(this.getAttribute('data-submission-id'));
             // Находим решение
             const submission = studentSubmissions.find(s => s.id === submissionId);
             if (submission) {
@@ -773,6 +778,39 @@ function updateStudentSubmissionsList(studentSubmissions) {
                         scoreContainer.style.display = 'block';
                         document.getElementById('viewSubmissionScore').textContent = `${submission.score || 'N/A'}/10`;
                         document.getElementById('viewSubmissionConfidence').textContent = `${submission.aiConfidence || 'N/A'}%`;
+                        document.querySelector('.feedback-content').textContent = submission.feedback || 'No feedback provided.';
+                    } else {
+                        scoreContainer.style.display = 'none';
+                    }
+                }
+            }
+        });
+    });
+    
+    document.querySelectorAll('.view-report-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const submissionId = parseInt(this.getAttribute('data-submission-id'));
+            // Находим решение
+            const submission = studentSubmissions.find(s => s.id === submissionId);
+            if (submission) {
+                // Находим соответствующее задание
+                const assignment = assignments.find(a => a.id === submission.assignmentId);
+                
+                // Открываем модальное окно и заполняем данными
+                const modal = document.getElementById('viewAnalysisReportModal');
+                if (modal) {
+            modal.classList.add('active');
+                    document.getElementById('viewAnalysisReportTitle').textContent = assignment.title;
+                    document.getElementById('viewAnalysisReportDate').textContent = new Date(submission.submittedAt).toLocaleDateString();
+                    document.getElementById('viewAnalysisReportFile').textContent = submission.solutionFile || 'No file';
+                    document.getElementById('viewAnalysisReportNotes').textContent = submission.notes || 'No notes provided';
+                    
+                    // Отображаем или скрываем блок с оценкой
+                    const scoreContainer = document.getElementById('viewAnalysisReportScoreContainer');
+                    if (submission.status === 'reviewed') {
+                        scoreContainer.style.display = 'block';
+                        document.getElementById('viewAnalysisReportScore').textContent = `${submission.score || 'N/A'}/10`;
+                        document.getElementById('viewAnalysisReportConfidence').textContent = `${submission.aiConfidence || 'N/A'}%`;
                         document.querySelector('.feedback-content').textContent = submission.feedback || 'No feedback provided.';
                     } else {
                         scoreContainer.style.display = 'none';
@@ -1109,15 +1147,12 @@ function updateAssignmentsList() {
                     <span>Status: ${dueStatus}</span>
                 </div>
             </div>
-            <div class="assignment-actions">
-                <button class="btn btn-outline edit-btn" data-id="${assignment.id}">
-                    <i class="fas fa-pencil-alt"></i> Edit
+            <div class="assignment-actions" style="background: transparent !important; border-top: none !important; padding: 0 !important; margin-top: 15px !important;">
+                <button class="btn btn-primary view-submissions-btn" data-id="${assignment.id}" style="background-color: #e74c3c !important; color: white !important; flex: 1;">
+                    <i class="fas fa-eye"></i> ПРОСМОТР РАБОТ
                 </button>
-                <button class="btn btn-primary view-submissions-btn" data-id="${assignment.id}">
-                    <i class="fas fa-eye"></i> View Submissions
-                </button>
-                <button class="btn btn-danger delete-assignment-btn" style="background-color: red; color: white; font-weight: bold;" data-id="${assignment.id}">
-                    <i class="fas fa-trash"></i> DELETE
+                <button class="btn btn-danger delete-assignment-btn" data-id="${assignment.id}" style="background-color: #e74c3c !important; color: white !important; flex: 1;">
+                    <i class="fas fa-trash"></i> УДАЛИТЬ
                 </button>
             </div>
         `;
@@ -1131,7 +1166,7 @@ function updateAssignmentsList() {
             const assignmentId = parseInt(this.getAttribute('data-id'));
             
             // Confirm before deleting
-            if (confirm('Are you sure you want to delete this assignment? This will also delete all student submissions for this assignment and cannot be undone.')) {
+            if (confirm('Вы уверены, что хотите удалить это задание? Это также удалит все решения студентов для этого задания, и операцию нельзя будет отменить.')) {
                 // Call the delete function
                 if (deleteAssignment(assignmentId)) {
                     alert('Assignment deleted successfully');
@@ -1171,7 +1206,7 @@ function updateAssignmentsList() {
             console.log(`Found ${assignmentSubmissions.length} submissions for assignment ${assignmentId}:`, assignmentSubmissions);
             
             if (assignmentSubmissions.length === 0) {
-                alert('No submissions for this assignment yet.');
+                alert('Для этого задания пока нет решений.');
                 return;
             }
             
@@ -1184,7 +1219,7 @@ function updateAssignmentsList() {
                 // Scroll to the submissions list
                 reviewsSection.scrollIntoView({ behavior: 'smooth' });
             } else {
-                alert('Submissions section not found.');
+                alert('Раздел с решениями не найден.');
             }
         });
     });
@@ -1249,7 +1284,7 @@ function updateSubmissionsList(assignmentId = null) {
     
     if (!submissionsList) {
         console.error("Submissions list container not found");
-        alert("Error: Submissions list container not found on page.");
+        alert("Ошибка: Контейнер списка решений не найден на странице.");
         return;
     }
     
@@ -1481,7 +1516,7 @@ function updateSubmissionsList(assignmentId = null) {
                 
                 ${submission.status === 'reviewed' ? `
                 <button class="btn view-report-btn" data-id="${submission.id}">
-                    <i class="fas fa-file-alt"></i> View Report
+                    <i class="fas fa-file-alt"></i> ОТЧЕТ
                 </button>
                 ` : ''}
             </div>
@@ -1541,13 +1576,13 @@ function showAnalysisReport(submissionId) {
     const submission = submissions.find(s => s.id === submissionId);
     if (!submission) {
         console.error(`Submission ${submissionId} not found in ${submissions.length} submissions`);
-        alert('Submission not found. Please try reloading the page.');
+        alert('Решение не найдено. Пожалуйста, перезагрузите страницу.');
         return;
     }
     
     if (!submission.analysis && submission.status !== 'reviewed') {
         console.error(`Submission ${submissionId} has not been analyzed yet`);
-        alert('This submission has not been analyzed yet. Please review it first.');
+        alert('Это решение еще не было проанализировано. Пожалуйста, сначала проверьте его.');
         return;
     }
     
@@ -1634,7 +1669,7 @@ function updateAssignmentDetails(assignment) {
     // Обновляем заголовок страницы
     const pageTitle = document.querySelector('.page-title');
     if (pageTitle) {
-        pageTitle.textContent = `Submit Solution: ${assignment.title}`;
+        pageTitle.textContent = `Отправка решения: ${assignment.title}`;
     }
     
     // Обновляем заголовок задания
@@ -2915,7 +2950,7 @@ function setupTeacherDashboardEventHandlers() {
     if (resetDataBtn) {
         resetDataBtn.addEventListener('click', function() {
             console.log('Reset data button clicked');
-            if (confirm('⚠️ WARNING: This will reset all data to demo values. Continue?')) {
+            if (confirm('⚠️ ПРЕДУПРЕЖДЕНИЕ: Это сбросит все данные до демо-значений. Продолжить?')) {
                 const result = forceResetData();
                 if (result.success) {
                     alert('Data has been reset to demo values successfully!');
@@ -2934,14 +2969,14 @@ function setupTeacherDashboardEventHandlers() {
             console.log(`%c Delete button clicked for assignment ${assignmentId} %c`, 'background: red; color: white; font-weight: bold;', '');
             
             // Confirm before deleting
-            if (confirm('Are you sure you want to delete this assignment? This will also delete all student submissions for this assignment and cannot be undone.')) {
+            if (confirm('Вы уверены, что хотите удалить это задание? Это также удалит все решения студентов для этого задания, и операцию нельзя будет отменить.')) {
                 // Call the delete function
                 if (deleteAssignment(assignmentId)) {
-                    alert('Assignment deleted successfully');
+                    alert('Задание успешно удалено');
                     // Update dashboard stats after deletion
                     updateTeacherDashboardStats();
                 } else {
-                    alert('Failed to delete assignment. Please try again.');
+                    alert('Не удалось удалить задание. Пожалуйста, попробуйте снова.');
                 }
             }
         }
@@ -3178,74 +3213,115 @@ function setupStudentDashboardEventHandlers() {
                     const studentSubmissions = submissions.filter(sub => sub.studentEmail === studentEmail);
                     const submittedAssignmentIds = studentSubmissions.map(sub => sub.assignmentId);
                     const availableAssignments = assignments.filter(assignment => !submittedAssignmentIds.includes(assignment.id));
+                    
+                    // Update data
                     updateStudentDashboardStats(studentSubmissions, availableAssignments);
                 }
-            } else if (text === 'Assignments') {
-                // Прокрутка к разделу заданий
-                document.querySelector('.assignments-container').scrollIntoView({ behavior: 'smooth' });
-            } else if (text === 'Submissions') {
-                // Прокрутка к разделу работ
-                document.querySelector('.recent-submissions').scrollIntoView({ behavior: 'smooth' });
-            } else if (text === 'Progress') {
-                alert('Progress tracking will be available soon!');
-            } else if (text === 'Grades') {
-                alert('Detailed grades will be available soon!');
-            } else if (text === 'Settings') {
-                alert('Settings will be available soon!');
-            } else if (text === 'Logout') {
-                logout();
             }
         });
     });
     
-    // Обработчики для фильтров
-    const filterButtons = document.querySelectorAll('.filter-btn, .tab-btn');
+    // Обработчики для кнопок фильтрации
+    const filterButtons = document.querySelectorAll('.filter-btn');
     filterButtons.forEach(button => {
         button.addEventListener('click', function() {
-            // Находим все кнопки в текущей группе фильтров
-            const filterGroup = this.closest('.assignments-filter, .tab-buttons');
-            const buttons = filterGroup.querySelectorAll('.filter-btn, .tab-btn');
-            
-            // Убираем класс active со всех кнопок
-            buttons.forEach(btn => btn.classList.remove('active'));
-            
-            // Добавляем класс active текущей кнопке
+            // Убираем активный класс со всех кнопок
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            // Добавляем активный класс текущей кнопке
             this.classList.add('active');
+            
+            // Реализация логики фильтрации
+            const filter = this.textContent.trim();
+            // ... логика фильтрации ...
         });
     });
     
-    // Обработчик для кнопок отправки решения
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('submit-btn') || e.target.closest('.submit-btn')) {
-            const button = e.target.classList.contains('submit-btn') ? e.target : e.target.closest('.submit-btn');
-            const assignmentId = parseInt(button.getAttribute('data-id'));
+    // Обработчики для кнопок табов
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Убираем активный класс со всех кнопок
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            // Добавляем активный класс текущей кнопке
+            this.classList.add('active');
             
-            // Переходим на страницу отправки решения
-            window.location.href = `submit-solution.html?id=${assignmentId}`;
+            // Реализация логики переключения табов
+            const tab = this.textContent.trim();
+            // ... логика переключения табов ...
+        });
+    });
+    
+    // Перевод кнопок на странице
+    updateButtonTranslations();
+}
+
+// Функция для обновления переводов кнопок на странице
+function updateButtonTranslations() {
+    // Перевод всех кнопок VIEW DETAILS
+    document.querySelectorAll('button.view-details-btn').forEach(button => {
+        if (button.textContent.trim() === 'VIEW DETAILS') {
+            button.innerHTML = '<i class="fas fa-eye"></i> ПОДРОБНОСТИ';
+        }
+    });
+            
+    // Перевод всех кнопок Submit Solution
+    document.querySelectorAll('button.submit-solution-btn').forEach(button => {
+        if (button.textContent.trim() === 'Submit Solution') {
+            button.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> ОТПРАВИТЬ РЕШЕНИЕ';
         }
     });
     
-    // Add refresh handler for any refresh button (future-proofing)
-    const refreshBtn = document.querySelector('.refresh-btn');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', function() {
-            // Re-filter the data for the current student
-            if (currentUser && currentUser.email) {
-                const studentEmail = currentUser.email;
-                const studentSubmissions = submissions.filter(sub => sub.studentEmail === studentEmail);
-                const submittedAssignmentIds = studentSubmissions.map(sub => sub.assignmentId);
-                const availableAssignments = assignments.filter(assignment => !submittedAssignmentIds.includes(assignment.id));
-                
-                // Update the dashboard with the most current data
-                updateStudentDashboardStats(studentSubmissions, availableAssignments);
-                updateStudentAssignmentsList(availableAssignments);
-                updateStudentSubmissionsList(studentSubmissions);
-            }
-        });
-    }
+    // Перевод всех кнопок VIEW SUBMISSIONS
+    document.querySelectorAll('button.view-submissions-btn').forEach(button => {
+        if (button.textContent.trim() === 'VIEW SUBMISSIONS') {
+            button.innerHTML = '<i class="fas fa-eye"></i> ПРОСМОТР РАБОТ';
+        }
+    });
     
-    console.log("Student dashboard event handlers set up successfully");
+    // Перевод всех кнопок DELETE
+    document.querySelectorAll('button.delete-assignment-btn').forEach(button => {
+        if (button.textContent.trim() === 'DELETE') {
+            button.innerHTML = '<i class="fas fa-trash"></i> УДАЛИТЬ';
+        }
+    });
+    
+    // Дополнительный поиск по классу
+    document.querySelectorAll('.assignment-actions button').forEach(button => {
+        if (button.textContent.trim() === 'VIEW DETAILS') {
+            button.innerHTML = '<i class="fas fa-eye"></i> ПОДРОБНОСТИ';
+        }
+        if (button.textContent.trim() === 'Submit Solution') {
+            button.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> ОТПРАВИТЬ РЕШЕНИЕ';
+        }
+        if (button.textContent.trim() === 'VIEW SUBMISSIONS') {
+            button.innerHTML = '<i class="fas fa-eye"></i> ПРОСМОТР РАБОТ';
+        }
+        if (button.textContent.trim() === 'DELETE') {
+            button.innerHTML = '<i class="fas fa-trash"></i> УДАЛИТЬ';
+        }
+    });
+    
+    // Обновление кнопок в карточках заданий
+    document.querySelectorAll('[id^="view_details_"]').forEach(button => {
+        button.innerHTML = '<i class="fas fa-eye"></i> ПОДРОБНОСТИ';
+    });
+    
+    document.querySelectorAll('[id^="submit_solution_"]').forEach(button => {
+        button.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> ОТПРАВИТЬ РЕШЕНИЕ';
+    });
 }
+
+// Вызываем функцию перевода при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    // Существующий код...
+    
+    // Добавляем перевод кнопок
+    setTimeout(updateButtonTranslations, 1000);
+    
+    // Повторяем перевод через некоторое время, чтобы охватить динамически созданные элементы
+    setTimeout(updateButtonTranslations, 2000);
+    setTimeout(updateButtonTranslations, 3000);
+});
 
 // Обработчик событий, который выполняется после полной загрузки страницы
 document.addEventListener('DOMContentLoaded', function() {
@@ -4495,3 +4571,26 @@ function exportAssignmentReport(taskId) {
         }
     }, 1000); // Simulate API delay
 }
+
+// Устанавливаем обработчик события для кнопки выхода
+document.addEventListener("DOMContentLoaded", function() {
+    // Находим кнопку выхода
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', logout);
+        console.log("Logout event handler attached");
+    } else {
+        console.warn("Logout button not found on initial DOMContentLoaded");
+        
+        // Дополнительная проверка через секунду на случай, если DOM еще не полностью загружен
+        setTimeout(() => {
+            const delayedLogoutBtn = document.getElementById('logoutBtn');
+            if (delayedLogoutBtn) {
+                delayedLogoutBtn.addEventListener('click', logout);
+                console.log("Logout event handler attached after delay");
+            } else {
+                console.error("Logout button not found even after delay");
+            }
+        }, 1000);
+    }
+});

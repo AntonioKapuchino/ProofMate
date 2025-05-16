@@ -17,6 +17,10 @@ import pandas as pd
 from fastapi.responses import Response
 from datetime import datetime
 import openpyxl
+from openpyxl.styles import PatternFill, Alignment
+import glob
+import uuid
+import shutil
 
 # Configure logging
 logging.basicConfig(
@@ -130,55 +134,66 @@ def create_prompt_for_analysis(topic, reference_nb_repr, student_nb_repr):
     """Create a specialized prompt based on the detected mathematical topic."""
     
     topic_specific_instructions = {
-        'linear_algebra': "Focus on matrix operations, vector spaces, eigenvalues/eigenvectors, and linear transformations.",
-        'calculus': "Focus on derivative calculations, integration techniques, limit evaluations, and applications.",
-        'geometry': "Focus on conic sections, coordinate geometry, transformations, and geometric constructions.",
-        'statistics': "Focus on data analysis, probability calculations, hypothesis testing, and statistical modeling.",
-        'number_theory': "Focus on prime numbers, divisibility, modular arithmetic, and algebraic structures.",
-        'general_mathematics': "Focus on correctness of calculations, mathematical reasoning, and implementation of algorithms."
+        'linear_algebra': "Обрати внимание на операции с матрицами, векторные пространства, собственные значения/векторы и линейные преобразования.",
+        'calculus': "Обрати внимание на вычисление производных, техники интегрирования, вычисление пределов и их применение.",
+        'geometry': "Обрати внимание на конические сечения, координатную геометрию, преобразования и геометрические построения.",
+        'statistics': "Обрати внимание на анализ данных, вероятностные расчеты, проверку гипотез и статистическое моделирование.",
+        'number_theory': "Обрати внимание на простые числа, делимость, модульную арифметику и алгебраические структуры.",
+        'general_mathematics': "Обрати внимание на правильность вычислений, математические рассуждения и реализацию алгоритмов."
     }
     
     return f"""
-    As an expert mathematician specializing in {topic}, analyze these mathematics solutions.
+    Ты профессиональный математик и преподаватель, который анализирует работу студента.
     {topic_specific_instructions.get(topic, topic_specific_instructions['general_mathematics'])}
     
-    # Reference Solution:
+    # Эталонное решение:
     ```python
     {reference_nb_repr}
     ```
     
-    # Student Solution:
+    # Решение студента:
     ```python
     {student_nb_repr}
     ```
     
-    Please analyze the student's solution against the reference solution and provide a detailed analysis with the following structure:
+    Проанализируй решение студента по сравнению с эталонным решением и предоставь детальный анализ по следующей структуре на русском языке:
 
-    ## Summary
-    [Provide a concise summary of the overall quality of the solution and major issues]
+    ## Краткое резюме
+    [Дай краткое и конкретное резюме об общем качестве решения и основных проблемах]
 
-    ## Strengths
-    - [List specific strengths, with each point starting with a dash]
-    - [Be detailed and specific]
+    ## Сильные стороны
+    [Перечисли 3-5 конкретных сильных сторон решения, каждый пункт должен быть уникальным]
+    - Пункт 1
+    - Пункт 2
+    - и т.д.
 
-    ## Areas for Improvement
-    - [List specific weaknesses or errors, with each point starting with a dash]
-    - [Be detailed and specific]
+    ## Области для улучшения
+    [Перечисли 3-5 конкретных слабых сторон или ошибок, каждый пункт должен быть уникальным]
+    - Пункт 1
+    - Пункт 2
+    - и т.д.
 
-    ## Recommendations
-    - [List specific suggestions for improvement, with each point starting with a dash]
-    - [Be practical and actionable]
+    ## Рекомендации
+    [Перечисли 3-5 конкретных предложений по улучшению, каждый пункт должен быть уникальным]
+    - Пункт 1
+    - Пункт 2
+    - и т.д.
 
-    ## Cell Annotations
-    Cell X: [Specific feedback for cell X, including errors and suggestions]
-    Cell Y: [Specific feedback for cell Y, including errors and suggestions]
-    [Add annotations for all cells that need feedback]
+    ## Комментарии к ячейкам
+    [Для каждой ячейки с проблемами дай конкретный комментарий о проблеме и как её решить]
+    Ячейка X: [конкретный комментарий для ячейки X]
+    Ячейка Y: [конкретный комментарий для ячейки Y]
+    и т.д.
 
-    ## Grade and Confidence
-    Grade: [Assign a grade from 0-10]
-    Confidence: [Specify your confidence level from 0-1]
+    ## Оценка и уверенность
+    Оценка: [Поставь оценку от 0 до 10, где 10 - идеальное решение]
+    Уверенность: [Укажи уровень уверенности от 0 до 1, где 1 - полная уверенность]
 
-    IMPORTANT: Provide specific and detailed cell annotations for any problematic cells, as this is crucial for the student's understanding. Ensure your feedback is constructive and helpful.
+    ВАЖНО: 
+    1. Каждый пункт в разделах "Сильные стороны", "Области для улучшения" и "Рекомендации" должен быть уникальным - НЕ ПОВТОРЯЙ одну и ту же мысль разными словами.
+    2. Обязательно используй формат списков с тире (-) для всех перечислений.
+    3. Давай конкретные и полезные комментарии для каждой проблемной ячейки.
+    4. Отвечай ТОЛЬКО на русском языке.
     """
 
 def parse_ai_response(response_text):
@@ -187,74 +202,132 @@ def parse_ai_response(response_text):
     
     # Extract summary - use the first paragraph that's not empty
     paragraphs = [p.strip() for p in response_text.split('\n\n') if p.strip()]
-    error_summary = paragraphs[0] if paragraphs else "Analysis completed."
+    error_summary = paragraphs[0] if paragraphs else "Анализ завершен."
     
     if len(error_summary) < 20 and len(paragraphs) > 1:
         # First paragraph might be too short, try the next one
         error_summary = paragraphs[1]
     
-    # Try to extract grade
-    grade_match = re.search(r'grade:?\s*(\d+(?:\.\d+)?)', response_text, re.IGNORECASE)
+    # Try to extract grade - support both English and Russian patterns
+    grade_match = re.search(r'(?:grade|оценка):?\s*(\d+(?:\.\d+)?)', response_text, re.IGNORECASE)
     grade = float(grade_match.group(1)) if grade_match else 7.5  # Default grade
     
-    # Try to extract confidence
-    confidence_match = re.search(r'confidence:?\s*(\d+(?:\.\d+)?)', response_text, re.IGNORECASE)
+    # Try to extract confidence - support both English and Russian patterns
+    confidence_match = re.search(r'(?:confidence|уверенность):?\s*(\d+(?:\.\d+)?)', response_text, re.IGNORECASE)
     confidence = float(confidence_match.group(1)) if confidence_match else 0.9  # Default confidence
     
-    # Extract strengths
+    # Extract strengths - use unified set of patterns for Russian and English
     strengths = []
-    # Try multiple patterns for strength extraction
-    strength_patterns = [
-        r'(?:strength|сильн[а-я]+\s+сторон[а-я]+|положительн[а-я]+)(?:[s:]\s*|\s*:\s*)(.*?)(?=\n|$)',
-        r'(?:strength|сильн[а-я]+\s+сторон[а-я]+)[^\n:]*\n\s*[-*•]?\s*(.*?)(?=\n|$)',
-        r'(?<=\n)[-*•]\s*(.*?)(?=\n|$)'  # Look for bullet points after strength headers
-    ]
+    strength_section = re.search(r'##\s*(?:Strengths|Сильные\s+стороны)(.*?)(?=##|$)', response_text, re.IGNORECASE | re.DOTALL)
     
-    for pattern in strength_patterns:
-        matched_strengths = re.findall(pattern, response_text, re.IGNORECASE | re.MULTILINE)
-        if matched_strengths:
-            strengths.extend([s.strip() for s in matched_strengths if s.strip()])
+    if strength_section:
+        # Extract all bullet points inside the strengths section
+        bullet_points = re.findall(r'[-*•]\s*(.*?)(?=\n[-*•]|\n\n|$)', strength_section.group(1), re.DOTALL)
+        strengths.extend([s.strip() for s in bullet_points if s.strip()])
     
-    # Extract weaknesses
+        # If we didn't find strengths in a dedicated section, try direct text patterns
+    if not strengths:
+        # Try multiple patterns for strength extraction
+        strength_patterns = [
+            r'(?:strength|сильн[а-я]+\s+сторон[а-я]+|положительн[а-я]+)(?:[s:]\s*|\s*:\s*)(.*?)(?=\n|$)',
+            r'(?:strength|сильн[а-я]+\s+сторон[а-я]+)[^\n:]*\n\s*[-*•]?\s*(.*?)(?=\n|$)',
+            r'(?<=\n)[-*•]\s*(.*?)(?=\n|$)'  # Look for bullet points after strength headers
+        ]
+        
+        for pattern in strength_patterns:
+            matched_strengths = re.findall(pattern, response_text, re.IGNORECASE | re.MULTILINE)
+            if matched_strengths:
+                strengths.extend([s.strip() for s in matched_strengths if s.strip()])
+    
+    # Remove duplicates while preserving order
+    unique_strengths = []
+    seen_strengths = set()
+    for s in strengths:
+        normalized = s.lower().strip()
+        if normalized not in seen_strengths and len(normalized) > 5:  # Only consider substantial items
+            unique_strengths.append(s)
+            seen_strengths.add(normalized)
+    
+    strengths = unique_strengths
+    
+    # Extract weaknesses with similar approach
     weaknesses = []
-    # Try multiple patterns for weakness extraction
-    weakness_patterns = [
-        r'(?:weakness|issue|error|problem|област[а-я]+\s+для\s+улучшени[а-я]+|недостат[а-я]+|ошибк[а-я]+)(?:[s:]\s*|\s*:\s*)(.*?)(?=\n|$)',
-        r'(?:weakness|issue|error|problem|област[а-я]+\s+для\s+улучшени[а-я]+)[^\n:]*\n\s*[-*•]?\s*(.*?)(?=\n|$)'
-    ]
+    weakness_section = re.search(r'##\s*(?:(?:Areas\s+for\s+Improvement|Weaknesses)|(?:Области\s+для\s+улучшения|Недостатки))(.*?)(?=##|$)', response_text, re.IGNORECASE | re.DOTALL)
     
-    for pattern in weakness_patterns:
-        matched_weaknesses = re.findall(pattern, response_text, re.IGNORECASE | re.MULTILINE)
-        if matched_weaknesses:
-            weaknesses.extend([w.strip() for w in matched_weaknesses if w.strip()])
+    if weakness_section:
+        # Extract all bullet points inside the weaknesses section
+        bullet_points = re.findall(r'[-*•]\s*(.*?)(?=\n[-*•]|\n\n|$)', weakness_section.group(1), re.DOTALL)
+        weaknesses.extend([w.strip() for w in bullet_points if w.strip()])
     
-    # Extract suggestions
+    # If we didn't find weaknesses in a dedicated section, try direct text patterns
+    if not weaknesses:
+        weakness_patterns = [
+            r'(?:weakness|issue|error|problem|област[а-я]+\s+для\s+улучшени[а-я]+|недостат[а-я]+|ошибк[а-я]+)(?:[s:]\s*|\s*:\s*)(.*?)(?=\n|$)',
+            r'(?:weakness|issue|error|problem|област[а-я]+\s+для\s+улучшени[а-я]+)[^\n:]*\n\s*[-*•]?\s*(.*?)(?=\n|$)'
+        ]
+        
+        for pattern in weakness_patterns:
+            matched_weaknesses = re.findall(pattern, response_text, re.IGNORECASE | re.MULTILINE)
+            if matched_weaknesses:
+                weaknesses.extend([w.strip() for w in matched_weaknesses if w.strip()])
+    
+    # Remove duplicates while preserving order
+    unique_weaknesses = []
+    seen_weaknesses = set()
+    for w in weaknesses:
+        normalized = w.lower().strip()
+        if normalized not in seen_weaknesses and len(normalized) > 5:  # Only consider substantial items
+            unique_weaknesses.append(w)
+            seen_weaknesses.add(normalized)
+    
+    weaknesses = unique_weaknesses
+    
+    # Extract suggestions with similar approach
     suggestions = []
-    # Try multiple patterns for suggestion extraction
-    suggestion_patterns = [
-        r'(?:suggestion|recommendation|improvement|рекомендаци[а-я]+)(?:[s:]\s*|\s*:\s*)(.*?)(?=\n|$)',
-        r'(?:suggestion|recommendation|improvement|рекомендаци[а-я]+)[^\n:]*\n\s*[-*•]?\s*(.*?)(?=\n|$)'
-    ]
+    suggestion_section = re.search(r'##\s*(?:Recommendations|Рекомендации)(.*?)(?=##|$)', response_text, re.IGNORECASE | re.DOTALL)
     
-    for pattern in suggestion_patterns:
-        matched_suggestions = re.findall(pattern, response_text, re.IGNORECASE | re.MULTILINE)
-        if matched_suggestions:
-            suggestions.extend([s.strip() for s in matched_suggestions if s.strip()])
+    if suggestion_section:
+        # Extract all bullet points inside the recommendations section
+        bullet_points = re.findall(r'[-*•]\s*(.*?)(?=\n[-*•]|\n\n|$)', suggestion_section.group(1), re.DOTALL)
+        suggestions.extend([s.strip() for s in bullet_points if s.strip()])
+    
+    # If we didn't find suggestions in a dedicated section, try direct text patterns
+    if not suggestions:
+        suggestion_patterns = [
+            r'(?:suggestion|recommendation|improvement|рекомендаци[а-я]+)(?:[s:]\s*|\s*:\s*)(.*?)(?=\n|$)',
+            r'(?:suggestion|recommendation|improvement|рекомендаци[а-я]+)[^\n:]*\n\s*[-*•]?\s*(.*?)(?=\n|$)'
+        ]
+        
+        for pattern in suggestion_patterns:
+            matched_suggestions = re.findall(pattern, response_text, re.IGNORECASE | re.MULTILINE)
+            if matched_suggestions:
+                suggestions.extend([s.strip() for s in matched_suggestions if s.strip()])
+    
+    # Remove duplicates while preserving order
+    unique_suggestions = []
+    seen_suggestions = set()
+    for s in suggestions:
+        normalized = s.lower().strip()
+        if normalized not in seen_suggestions and len(normalized) > 5:  # Only consider substantial items
+            unique_suggestions.append(s)
+            seen_suggestions.add(normalized)
+    
+    suggestions = unique_suggestions
     
     # Extract cell annotations
     cell_annotations = []
     
     # Look for a Cell Annotations section in the response
-    cell_section_match = re.search(r'(?:##?\s*Cell\s+Annotations|Аннотации\s+к\s+ячейкам)(.*?)(?=##|\Z)', 
+    cell_section_match = re.search(r'(?:##?\s*(?:Cell\s+Annotations|Комментарии\s+к\s+ячейкам))(.*?)(?=##|\Z)', 
                                  response_text, re.IGNORECASE | re.DOTALL)
     
     if cell_section_match:
         cell_section = cell_section_match.group(1).strip()
         
         # Extract annotations from bullet points with cell references
-        # This pattern looks for: - **Cell X** or - Cell X or Cell X:
+        # This pattern looks for: Ячейка X: or Cell X:
         bullet_cell_annotations = re.findall(
-            r'[-*•]?\s*(?:\*\*)?(?:cell|ячейка)\s*(\d+)(?:\*\*)?[:\s-]+\s*(.*?)(?=\n\s*[-*•]|\n\s*(?:\*\*)?(?:cell|ячейка)|\Z)', 
+            r'(?:cell|ячейка)\s*(\d+)[:\s-]+\s*(.*?)(?=\n\s*(?:cell|ячейка)|\n\n|\Z)', 
             cell_section, 
             re.IGNORECASE | re.DOTALL
         )
@@ -335,16 +408,16 @@ def parse_ai_response(response_text):
     
     # Add default values if we still don't have anything
     if not strengths:
-        strengths = ["The solution demonstrates understanding of core mathematical concepts"]
-    if not weaknesses and "error" in error_summary.lower():
+        strengths = ["Решение демонстрирует понимание основных математических концепций"]
+    if not weaknesses and ("error" in error_summary.lower() or "ошибк" in error_summary.lower()):
         # Extract weakness from the summary if possible
         weaknesses = [error_summary]
     
     # Build the structured feedback
     detailed_feedback = {
-        "strengths": strengths,
-        "weaknesses": weaknesses,
-        "suggestions": suggestions if suggestions else ["Review the specific cell annotations for detailed improvement suggestions"]
+        "strengths": strengths[:5],  # Limit to top 5 strengths
+        "weaknesses": weaknesses[:5],  # Limit to top 5 weaknesses
+        "suggestions": suggestions[:5] if suggestions else ["Ознакомьтесь с комментариями к ячейкам для детальных рекомендаций"]
     }
     
     # Log the extracted information for debugging
@@ -408,20 +481,128 @@ def call_openai_api_alternative(prompt, model="gpt-4o"):
         logger.error(f"❌ Alternative method exception: {str(e)}")
         return None
 
+# Utility function to create Excel report from analysis results
+def create_excel_report(task_id: str, submissions_data: List[Dict[str, Any]]):
+    """
+    Создание компактного Excel-отчета из результатов анализа
+    
+    Аргументы:
+        task_id: ID задания
+        submissions_data: Список решений с результатами анализа
+        
+    Возвращает:
+        BytesIO объект, содержащий Excel файл
+    """
+    logger.info(f"Создание Excel-отчета для задания {task_id} с {len(submissions_data)} решениями")
+    
+    # Создаем BytesIO объект для хранения Excel файла
+    output = io.BytesIO()
+    
+    try:
+        # Создаем Pandas Excel writer с использованием BytesIO объекта
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            # Создаем основной лист сводки - компактная версия
+            summary_data = {
+                "ID студента": [],
+                "Имя": [],
+                "Оценка": [],
+                "Уверенность": [],
+                "Дата сдачи": [],
+                "Количество ошибок": [],
+                "Комментарий": []
+            }
+            
+            # Извлекаем данные из каждого решения
+            for sub in submissions_data:
+                analysis_result = sub.get("analysis_result", {})
+                error_highlights = analysis_result.get("error_highlights", [])
+                weaknesses = analysis_result.get("detailed_feedback", {}).get("weaknesses", [])
+                
+                # Вычисляем количество ошибок - используем либо error_highlights, либо количество слабых сторон
+                error_count = len(error_highlights) if error_highlights else len(weaknesses)
+                
+                # Получаем краткую сводку об ошибках
+                error_summary = analysis_result.get("error_summary", "Сводка об ошибках недоступна")
+                
+                # Добавляем данные сводки
+                summary_data["ID студента"].append(sub.get("student_id", "Неизвестно"))
+                summary_data["Имя"].append(sub.get("name", "Неизвестно"))
+                summary_data["Оценка"].append(analysis_result.get("grade", 0.0))
+                summary_data["Уверенность"].append(analysis_result.get("confidence_score", 0.0))
+                summary_data["Дата сдачи"].append(sub.get("submission_date", ""))
+                summary_data["Количество ошибок"].append(error_count)
+                summary_data["Комментарий"].append(error_summary)
+            
+            # Преобразуем в DataFrame
+            summary_df = pd.DataFrame(summary_data)
+            
+            # Записываем сводку в Excel лист
+            summary_df.to_excel(writer, sheet_name="Сводка", index=False)
+            
+            # Форматируем лист сводки
+            worksheet = writer.sheets["Сводка"]
+            
+            # Делаем заголовки жирными
+            for col_num, value in enumerate(summary_df.columns.values):
+                cell = worksheet.cell(row=1, column=col_num+1)
+                cell.style = 'Headline 1'
+                
+                # Регулируем ширину столбцов для удобочитаемости
+                if value == "Комментарий":
+                    worksheet.column_dimensions[chr(65 + col_num)].width = 60  # Делаем столбец комментариев шире
+                else:
+                    worksheet.column_dimensions[chr(65 + col_num)].width = 15
+            
+            # Применяем перенос текста для комментариев
+            for row in range(2, len(summary_data["Комментарий"]) + 2):
+                cell = worksheet.cell(row=row, column=7)  # Столбец с комментариями
+                cell.alignment = Alignment(wrap_text=True, vertical='top')
+                worksheet.row_dimensions[row].height = 60  # Регулируем высоту строки
+            
+            # Удалили создание листа с детальной обратной связью, чтобы отчет был компактным
+            # и сфокусированным на информации о нескольких студенческих решениях
+        
+        # Получаем содержимое Excel файла
+        output.seek(0)
+        return output
+    
+    except Exception as e:
+        logger.error(f"Error creating Excel file: {str(e)}")
+        raise e
+
 # Routes
 @app.get("/")
 async def root():
-    return {"message": "ProofMate Notebook Analysis API is running"}
+    return {"message": "API анализа ноутбуков ProofMate запущено"}
 
 @app.get("/healthcheck")
 async def healthcheck():
-    return {"status": "ok", "environment": environment}
+    return {"status": "ок", "environment": environment}
+
+# Utility function to ensure analysis files are available
+def ensure_analysis_files_available():
+    """Copy analysis files from parent directory if they exist there but not in current directory."""
+    current_dir = os.getcwd()
+    parent_dir = os.path.abspath(os.path.join(current_dir, ".."))
+    
+    for filename in ["direct_analysis_result.json", "analysis_result.json"]:
+        parent_path = os.path.join(parent_dir, filename)
+        current_path = os.path.join(current_dir, filename)
+        
+        if os.path.exists(parent_path) and not os.path.exists(current_path):
+            try:
+                shutil.copy(parent_path, current_path)
+                logger.info(f"Copied {filename} from parent directory to current directory")
+            except Exception as e:
+                logger.error(f"Failed to copy {filename}: {str(e)}")
 
 @app.post("/api/analyze", response_model=AnalysisResult)
 async def analyze_notebook(
     notebook_file: UploadFile = File(...),
     reference_solution: UploadFile = File(...),
-    task_id: str = Form(...)
+    task_id: str = Form(...),
+    student_id: str = Form(None),
+    student_name: str = Form(None)
 ):
     """
     Analyze a student's notebook against a reference solution.
@@ -429,6 +610,24 @@ async def analyze_notebook(
     """
     logger.info(f"Received analysis request for task {task_id}")
     logger.info(f"Student notebook: {notebook_file.filename}, Reference: {reference_solution.filename}")
+    
+    # Use filename as student name if not provided
+    if not student_name:
+        student_name = notebook_file.filename.split('.')[0] if notebook_file.filename else "Анонимный"
+    
+    # Generate a student ID based on name if not provided
+    if not student_id:
+        # Create a consistent ID based on student name and task ID
+        # This ensures the same student gets the same ID for the same task
+        # even if they submit multiple times
+        name_for_id = student_name.lower().replace(" ", "_")
+        student_id = f"{name_for_id}_{task_id}"[:8]
+        
+        # If the ID is too short or empty, add a random suffix
+        if len(student_id) < 4:
+            student_id += str(uuid.uuid4())[:4]
+    
+    logger.info(f"Processing submission for student ID: {student_id}, name: {student_name}")
     
     try:
         # Read the contents of both files
@@ -438,7 +637,7 @@ async def analyze_notebook(
         # Validate the file content
         if len(student_content) < 10 or len(reference_content) < 10:
             logger.error(f"One or both files appear to be empty or too small")
-            raise HTTPException(status_code=400, detail="One or both notebook files appear to be empty or invalid")
+            raise HTTPException(status_code=400, detail="Один или оба файла ноутбуков пусты или недействительны")
         
         # Parse notebooks
         student_cells = extract_cells_from_notebook(student_content)
@@ -446,7 +645,7 @@ async def analyze_notebook(
         
         if not student_cells or not reference_cells:
             logger.error("Failed to parse notebook files")
-            raise HTTPException(status_code=400, detail="Failed to parse notebook files. Please ensure they are valid Jupyter notebooks.")
+            raise HTTPException(status_code=400, detail="Не удалось проанализировать файлы ноутбуков. Убедитесь, что это допустимые Jupyter notebooks.")
         
         # Detect the mathematical topic
         topic = detect_math_topic(student_cells + reference_cells)
@@ -479,7 +678,7 @@ async def analyze_notebook(
                 response = openai.chat.completions.create(
                     model="gpt-4o",
                     messages=[
-                        {"role": "system", "content": "You are an AI assistant that analyzes mathematical solutions."},
+                        {"role": "system", "content": "Вы ИИ-ассистент, который анализирует математические решения."},
                         {"role": "user", "content": analysis_prompt}
                     ],
                     temperature=0.5,
@@ -492,7 +691,7 @@ async def analyze_notebook(
                 logger.error(f"Both API call methods failed: {str(e)}")
                 raise HTTPException(
                     status_code=500, 
-                    detail="Failed to get a response from OpenAI API. Please try again later."
+                    detail="Не удалось получить ответ от API OpenAI. Пожалуйста, попробуйте позже."
                 )
         
         # Log first part of the response for debugging
@@ -502,14 +701,57 @@ async def analyze_notebook(
         analysis_result = parse_ai_response(ai_response)
         
         # Save the raw response for debugging
-        with open(f"response_debug_{task_id}.txt", "w") as f:
+        with open(f"response_debug_{task_id}_{student_id}.txt", "w") as f:
             f.write(ai_response)
+        
+        # Create directories for submissions if they don't exist
+        submissions_dir = os.path.join(os.getcwd(), "submissions")
+        if not os.path.exists(submissions_dir):
+            os.makedirs(submissions_dir)
+        
+        task_dir = os.path.join(submissions_dir, task_id)
+        if not os.path.exists(task_dir):
+            os.makedirs(task_dir)
+        
+        student_dir = os.path.join(task_dir, student_id)
+        if not os.path.exists(student_dir):
+            os.makedirs(student_dir)
+        
+        # Save the analysis result for this student
+        submission_info = {
+            "student_id": student_id,
+            "name": student_name,
+            "email": "",  # Could add email field in future
+            "submission_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "analysis_result": analysis_result
+        }
+        
+        # Save to student's directory
+        student_result_path = os.path.join(student_dir, "analysis_result.json")
+        with open(student_result_path, "w", encoding='utf-8') as f:
+            json.dump(submission_info, f, indent=2)
+            logger.info(f"Saved analysis result for student {student_id} to: {student_result_path}")
+        
+        # Also save to standard locations for backward compatibility
+        with open("analysis_result.json", "w", encoding='utf-8') as f:
+            json.dump(analysis_result, f, indent=2)
+            logger.info(f"Saved analysis result to current directory")
+        
+        # Also save to parent directory for access from web client
+        try:
+            parent_dir = os.path.abspath(os.path.join(os.getcwd(), ".."))
+            parent_file_path = os.path.join(parent_dir, "analysis_result.json")
+            with open(parent_file_path, "w", encoding='utf-8') as f:
+                json.dump(analysis_result, f, indent=2)
+                logger.info(f"Saved analysis result to parent directory: {parent_file_path}")
+        except Exception as e:
+            logger.error(f"Failed to save analysis result to parent directory: {str(e)}")
         
         # Validate the analysis result
         if not analysis_result["detailed_feedback"]["strengths"] and not analysis_result["detailed_feedback"]["weaknesses"]:
             logger.warning("Analysis result lacks both strengths and weaknesses")
             # Add a default strength if none were extracted
-            analysis_result["detailed_feedback"]["strengths"] = ["Solution demonstrates some understanding of the mathematical concepts"]
+            analysis_result["detailed_feedback"]["strengths"] = ["Решение демонстрирует понимание основных математических концепций"]
         
         if not analysis_result["cell_annotations"]:
             logger.warning("Analysis result lacks cell annotations")
@@ -535,199 +777,186 @@ async def analyze_notebook(
         
     except Exception as e:
         logger.error(f"Error analyzing notebooks: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ошибка анализа: {str(e)}")
 
 @app.get("/api/export-report/{task_id}")
 async def export_report(task_id: str):
     """
-    Export analysis results as an Excel file.
-    This endpoint creates an Excel report with analysis data for a single user.
-    All information is consolidated in a single sheet with feedback and cell annotations
-    in compact cells with line breaks.
+    Генерация Excel-отчета для заданий конкретной задачи
     """
+    logger.info(f"Generating Excel report for task ID: {task_id}")
+    
     try:
-        logger.info(f"Generating Excel report for task ID: {task_id}")
+        # Define the path to the submissions directory for this task
+        submissions_dir = os.path.join(os.getcwd(), "submissions", task_id)
         
-        # Create a single test user with their analysis result
-        # In a real app, this would be fetched from a database
-        test_user = {
-            "student_id": "12345",
-            "name": "Test",
-            "email": "Test@example.com",
-            "submission_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "analysis_result": {
-                "grade": 0,
-                "confidence_score": 0.9,
-                "error_summary": "Отсутствуют проверки размерности и обработка ошибок",
-                "detailed_feedback": {
-                    "strengths": [
-                        "Корректное использование NumPy для матричных операций",
-                        "Правильная реализация базовых матричных вычислений"
-                    ],
-                    "weaknesses": [
-                        "Отсутствует или некорректная Проверка размерности матриц",
-                        "Отсутствует или некорректная Проверка квадратности матрицы для определителя и обратной матрицы",
-                        "Отсутствует или некорректная Проверка сингулярности для обратной матрицы",
-                        "Отсутствует или некорректная Корректная обработка ошибок с возвратом None",
-                        "Отсутствует или некорректная Эффективные векторизованные операции"
-                    ],
-                    "suggestions": [
-                        "Добавьте корректную Проверка размерности матриц перед выполнением операций",
-                        "Добавьте корректную Проверка квадратности матрицы для определителя и обратной матрицы перед выполнением операций",
-                        "Добавьте корректную Проверка сингулярности для обратной матрицы перед выполнением операций",
-                        "Добавьте корректную Корректная обработка ошибок с возвратом None перед выполнением операций"
-                    ]
-                },
-                "cell_annotations": [
-                    {
-                        "cell_index": 3,
-                        "comments": ["Отсутствует проверка размерности матриц перед умножением"]
-                    },
-                    {
-                        "cell_index": 5,
-                        "comments": ["Необходима проверка на квадратность матрицы перед вычислением определителя"]
-                    },
-                    {
-                        "cell_index": 7,
-                        "comments": ["Добавьте проверку на сингулярность перед вычислением обратной матрицы"]
-                    }
-                ],
-                "error_highlights": []
-            }
-        }
+        # Initialize submissions data
+        submissions_data = []
         
-        logger.info("Created test user data")
+        # Check if the submissions directory exists
+        if os.path.exists(submissions_dir) and os.path.isdir(submissions_dir):
+            # Get all student subdirectories
+            student_dirs = [d for d in os.listdir(submissions_dir) 
+                           if os.path.isdir(os.path.join(submissions_dir, d))]
+            
+            logger.info(f"Found {len(student_dirs)} student submissions for task {task_id}")
+            
+            # Process each student's submission
+            for student_id in student_dirs:
+                student_dir = os.path.join(submissions_dir, student_id)
+                analysis_file = os.path.join(student_dir, "analysis_result.json")
+                
+                if os.path.exists(analysis_file):
+                    try:
+                        with open(analysis_file, "r", encoding='utf-8') as f:
+                            student_data = json.load(f)
+                        
+                        # Add to submissions data - include all submissions regardless of name
+                        submissions_data.append(student_data)
+                        logger.info(f"Added student {student_id} to the report")
+                    except Exception as e:
+                        logger.error(f"Error reading analysis result for student {student_id}: {str(e)}")
+                else:
+                    logger.warning(f"No analysis result found for student {student_id}")
         
-        # Create a BytesIO object to store the Excel file
-        output = io.BytesIO()
-        
-        try:
-            # Create a Pandas Excel writer using the BytesIO object
-            logger.info("Creating Excel writer")
-            with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                logger.info("Creating consolidated summary sheet")
-                
-                # Compile all feedback into a single formatted string
-                feedback_str = ""
-                
-                # Add strengths
-                feedback_str += "STRENGTHS:\n"
-                for strength in test_user["analysis_result"]["detailed_feedback"]["strengths"]:
-                    feedback_str += f"• {strength}\n"
-                feedback_str += "\n"
-                
-                # Add weaknesses
-                feedback_str += "WEAKNESSES:\n"
-                for weakness in test_user["analysis_result"]["detailed_feedback"]["weaknesses"]:
-                    feedback_str += f"• {weakness}\n"
-                feedback_str += "\n"
-                
-                # Add suggestions
-                feedback_str += "RECOMMENDATIONS:\n"
-                for suggestion in test_user["analysis_result"]["detailed_feedback"]["suggestions"]:
-                    feedback_str += f"• {suggestion}\n"
-                
-                # Compile all cell annotations into a single formatted string
-                cells_str = "CELL ANNOTATIONS:\n"
-                for annotation in test_user["analysis_result"]["cell_annotations"]:
-                    cell_index = annotation["cell_index"]
-                    for comment in annotation["comments"]:
-                        cells_str += f"• Cell {cell_index}: {comment}\n"
-                
-                # Create main summary sheet with columns for student info and consolidated feedback
-                summary_data = {
-                    "student_id": [test_user["student_id"]],
-                    "name": [test_user["name"]],
-                    "email": [test_user["email"]],
-                    "grade": [test_user["analysis_result"]["grade"]],
-                    "confidence_score": [test_user["analysis_result"]["confidence_score"]],
-                    "submission_date": [test_user["submission_date"]],
-                    "error_count": [len(test_user["analysis_result"]["detailed_feedback"]["weaknesses"])],
-                    "feedback": [feedback_str],
-                    "cell_annotations": [cells_str]
-                }
-                
-                # Convert to DataFrame
-                summary_df = pd.DataFrame(summary_data)
-                logger.info(f"Created consolidated DataFrame with {len(summary_df.columns)} columns")
-                
-                # Add statistical information
-                avg_grade = test_user["analysis_result"]["grade"]
-                min_grade = test_user["analysis_result"]["grade"]
-                max_grade = test_user["analysis_result"]["grade"]
-                
-                # Write summary to Excel sheet - use English sheet name as requested
-                summary_df.to_excel(writer, sheet_name="Summary", index=False)
-                logger.info("Wrote summary data to Excel")
-                
+        # If no submissions found in the new structure, try the legacy approach
+        if not submissions_data:
+            logger.info("Решения не найдены в новой структуре директорий. Пробуем устаревший подход.")
+            
+            # Make sure analysis files are available
+            ensure_analysis_files_available()
+            
+            # Log current working directory for debugging
+            current_dir = os.getcwd()
+            parent_dir = os.path.abspath(os.path.join(current_dir, ".."))
+            
+            # Define list of possible file paths to check in various locations
+            possible_paths = []
+            
+            # Look in current directory and parent directory for both files
+            for filename in ["analysis_result.json", "direct_analysis_result.json"]:
+                # Current directory
+                possible_paths.append(os.path.join(current_dir, filename))
+                # Parent directory 
+                possible_paths.append(os.path.join(parent_dir, filename))
+            
+            # Find all existing files and pick the most recent one
+            existing_files = []
+            for file_path in possible_paths:
+                if os.path.exists(file_path):
+                    mod_time = os.path.getmtime(file_path)
+                    file_size = os.path.getsize(file_path)
+                    existing_files.append((file_path, mod_time, file_size))
+            
+            # Sort files by modification time (most recent first)
+            existing_files.sort(key=lambda x: x[1], reverse=True)
+            
+            analysis_result = None
+            if existing_files:
+                # Use the most recent file
+                most_recent_file = existing_files[0][0]
+                logger.info(f"Using most recent file: {most_recent_file}")
                 try:
-                    # Format the worksheet
-                    worksheet = writer.sheets["Summary"]
+                    with open(most_recent_file, "r", encoding='utf-8') as f:
+                        analysis_result = json.load(f)
+                    logger.info(f"Successfully loaded analysis result from {most_recent_file}")
+                except Exception as e:
+                    logger.error(f"Failed to load analysis result from {most_recent_file}: {str(e)}")
                     
-                    # Make the headers bold and format the columns
-                    for col_num, value in enumerate(summary_df.columns.values):
-                        worksheet.cell(row=1, column=col_num+1).style = 'Headline 1'
-                    
-                    # Adjust column widths for better readability
-                    worksheet.column_dimensions['H'].width = 80  # feedback column
-                    worksheet.column_dimensions['I'].width = 50  # cell annotations column
-                    
-                    # Enable text wrapping for feedback and cell annotations
-                    for row in range(2, worksheet.max_row + 1):
-                        feedback_cell = worksheet.cell(row=row, column=8)  # H column
-                        feedback_cell.alignment = openpyxl.styles.Alignment(wrap_text=True, vertical='top')
-                        
-                        cells_cell = worksheet.cell(row=row, column=9)  # I column
-                        cells_cell.alignment = openpyxl.styles.Alignment(wrap_text=True, vertical='top')
-                        
-                        # Set row height to accommodate wrapped text
-                        worksheet.row_dimensions[row].height = 150
-                    
-                    # Add statistics at the bottom
-                    stats_row = len(summary_df) + 3
-                    worksheet.cell(row=stats_row, column=1).value = "Statistics"
-                    worksheet.cell(row=stats_row, column=1).style = 'Headline 1'
-                    
-                    worksheet.cell(row=stats_row+1, column=1).value = "Average Grade"
-                    worksheet.cell(row=stats_row+1, column=2).value = avg_grade
-                    
-                    worksheet.cell(row=stats_row+2, column=1).value = "Minimum Grade"
-                    worksheet.cell(row=stats_row+2, column=2).value = min_grade
-                    
-                    worksheet.cell(row=stats_row+3, column=1).value = "Maximum Grade"
-                    worksheet.cell(row=stats_row+3, column=2).value = max_grade
-                    logger.info("Formatted summary sheet")
-                except Exception as format_error:
-                    logger.error(f"Error formatting summary sheet: {str(format_error)}")
-                    # Continue without formatting
+                    # Try other files if available
+                    for file_path, _, _ in existing_files[1:]:
+                        try:
+                            logger.info(f"Trying alternate file: {file_path}")
+                            with open(file_path, "r", encoding='utf-8') as f:
+                                analysis_result = json.load(f)
+                            logger.info(f"Successfully loaded analysis result from {file_path}")
+                            break
+                        except Exception as e2:
+                            logger.error(f"Failed to load analysis result from {file_path}: {str(e2)}")
+            
+            # If analysis result found, create a mock submission
+            if analysis_result:
+                # Extract notebook info and student information
+                assignment_topic = "Неизвестная тема"
+                student_name = "Студент"
                 
-                logger.info("Excel file creation completed successfully")
-        except Exception as excel_err:
-            logger.error(f"Error creating Excel file: {str(excel_err)}")
-            raise Exception(f"Failed to create Excel document: {str(excel_err)}")
+                # Try to extract assignment topic and student name from filenames
+                notebook_files = []
+                student_files = glob.glob(os.path.join(parent_dir, "решение_студента*.ipynb"))
+                notebook_files.extend(student_files)
+                student_files = glob.glob(os.path.join(current_dir, "решение_студента*.ipynb"))
+                notebook_files.extend(student_files)
+                
+                if notebook_files:
+                    # Extract student name from filename
+                    filename = os.path.basename(notebook_files[0])
+                    if "_ellipse" in filename:
+                        assignment_topic = "Эллипс"
+                    elif "_complex" in filename:
+                        assignment_topic = "Комплексные числа"
+                    
+                    # Try to get a more specific student name if available
+                    student_name_match = re.search(r'(?:решение_студента|student_solution)_([^\.]+)\.ipynb', filename)
+                    if student_name_match:
+                        student_name = student_name_match.group(1).strip()
+                        if not student_name:
+                            student_name = "Студент"
+                
+                # Create a submission entry with the loaded analysis result
+                submissions_data.append({
+                    "student_id": f"{student_name}_{task_id}",
+                    "name": f"{student_name} - {assignment_topic}",
+                    "email": "студент@example.edu",
+                    "submission_date": datetime.now().strftime("%Y-%m-%d"),
+                    "analysis_result": analysis_result
+                })
+                logger.info(f"Создана запись решения по устаревшему методу для студента: {student_name}")
         
-        # Get the content of the Excel file
-        output.seek(0)
+        # If still no submissions, create a dummy entry
+        if not submissions_data:
+            logger.warning("Не найдены корректные результаты анализа. Создаём тестовый отчёт.")
+            submissions_data = [
+                {
+                    "student_id": "Неизвестно",
+                    "name": "Тестовый студент",
+                    "email": "студент@example.edu",
+                    "submission_date": datetime.now().strftime("%Y-%m-%d"),
+                    "analysis_result": {
+                        "error_summary": "Это тестовый отчет анализа. Реальный анализ не проводился.",
+                        "detailed_feedback": {
+                            "strengths": ["Это тестовое преимущество"],
+                            "weaknesses": ["Это тестовый недостаток"],
+                            "suggestions": ["Это тестовое предложение"]
+                        },
+                        "confidence_score": 0.5,
+                        "grade": 0.0,
+                        "cell_annotations": [
+                            {"cell_index": 0, "comments": ["Тестовый комментарий"]}
+                        ],
+                        "error_highlights": []
+                    }
+                }
+            ]
+        
+        # Use our utility function to create the Excel report
+        output = create_excel_report(task_id, submissions_data)
         excel_data = output.getvalue()
         
-        if len(excel_data) < 100:
-            logger.error(f"Excel data size too small: {len(excel_data)} bytes")
-            raise Exception("Generated Excel file is too small, likely corrupt")
-        
-        # Return the Excel file for download
-        filename = f"proofmate_report_{task_id}.xlsx"
+        # Create a response with the Excel file
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"proofmate_отчет_{task_id}_{timestamp}.xlsx"
         
         headers = {
             'Content-Disposition': f'attachment; filename="{filename}"',
             'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         }
         
-        logger.info(f"Excel report generated successfully for task ID: {task_id}")
+        logger.info(f"Excel-отчёт успешно создан для задания: {task_id} с {len(submissions_data)} решениями")
         return Response(content=excel_data, headers=headers)
         
     except Exception as e:
         logger.error(f"Error generating Excel report for task ID {task_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error generating report: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ошибка создания отчета: {str(e)}")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PYTHON_SERVER_PORT", 8000))

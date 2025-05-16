@@ -1,0 +1,1808 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProofMate - Панель Преподавателя</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* НОВЫЙ СПОСОБ ДЛЯ ФОНА */
+        .background-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: url('images/background.jpg') no-repeat center center/cover !important;
+            filter: brightness(0.5) saturate(1.2) !important;
+            opacity: 0.7 !important;
+            z-index: -1 !important;
+            pointer-events: none !important;
+        }
+        
+        /* Остальные стили */
+        body {
+            background: #000;
+            position: relative;
+            font-family: 'Montserrat', sans-serif;
+            color: #fff;
+        }
+        
+        /* Дополнительные стили для панели управления преподавателя */
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+            background-color: #232323; /* Changed from #000 to dark grey */
+        }
+        
+        .dashboard-sidebar {
+            width: 250px;
+            background-color: #1a1a1a; /* Changed from #111 to darker grey */
+            padding: 20px 0;
+            color: #fff;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+        
+        .dashboard-sidebar.active {
+            transform: translateX(0);
+        }
+        
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo-sidebar {
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+            margin: 0;
+            letter-spacing: 1px;
+        }
+        
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        .user-info {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            background-color: #2d2d2d; /* Updated to match dark grey scheme */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: #e74c3c;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 18px;
+        }
+        
+        .user-role {
+            color: #e74c3c;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .sidebar-menu {
+            padding: 20px;
+        }
+        
+        .menu-item {
+            padding: 12px 15px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .menu-item:hover, .menu-item.active {
+            background-color: rgba(231, 76, 60, 0.2);
+        }
+        
+        .menu-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .dashboard-main {
+            flex: 1;
+            margin-left: 250px;
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .dashboard-header {
+            margin-bottom: 30px;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        
+        .welcome-message {
+            color: rgba(255,255,255,0.7);
+            font-size: 16px;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background-color: #2a2a2a; /* Changed from #111 to slightly lighter grey */
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card-title {
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .stat-card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            background-color: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+        
+        .stat-card-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        
+        .stat-card-label {
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px 25px;
+            background-color: #111;
+            border: none;
+            color: #fff;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .action-btn i {
+            margin-right: 10px;
+        }
+        
+        .action-btn.primary {
+            background-color: #e74c3c;
+        }
+        
+        .action-btn.primary:hover {
+            background-color: #c0392b;
+        }
+        
+        .action-btn.secondary {
+            background-color: rgba(231, 76, 60, 0.2);
+        }
+        
+        .action-btn.secondary:hover {
+            background-color: rgba(231, 76, 60, 0.3);
+        }
+        
+        .assignments-container, .review-container {
+            background-color: #111;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .view-all {
+            color: #e74c3c;
+            font-size: 14px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .view-all:hover {
+            text-decoration: underline;
+        }
+        
+        .assignments-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        .assignment-card {
+            background-color: #1a1a1a !important;
+            border-radius: 8px !important;
+            padding: 20px !important;
+            margin-bottom: 15px !important;
+            border-left: 4px solid #e74c3c !important;
+            transition: transform 0.3s ease !important;
+            cursor: pointer !important;
+        }
+        
+        .assignment-card:hover {
+            transform: translateX(5px) !important;
+        }
+        
+        .assignment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .assignment-title {
+            font-weight: 600;
+            color: #fff;
+            font-size: 18px;
+        }
+        
+        .assignment-stats {
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .assignment-details {
+            display: flex;
+            justify-content: space-between;
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+        }
+        
+        .assignment-detail {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .assignment-detail i {
+            font-size: 12px;
+        }
+        
+        .review-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        .review-card {
+            background-color: #1a1a1a;
+            border-radius: 8px;
+            padding: 20px;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+            border-left: 4px solid #f39c12;
+        }
+        
+        .review-card:hover {
+            transform: translateX(5px);
+        }
+        
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .student-name {
+            font-weight: 600;
+            color: #fff;
+            font-size: 18px;
+        }
+        
+        .submission-time {
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .assignment-name {
+            font-size: 14px;
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+        
+        .ai-status {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #f39c12;
+            gap: 5px;
+        }
+        
+        @media (max-width: 992px) {
+            .dashboard-sidebar {
+                transform: translateX(-250px);
+                z-index: 1000;
+            }
+            
+            .dashboard-sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .dashboard-main {
+                margin-left: 0;
+            }
+            
+            .menu-toggle {
+                display: block;
+            }
+            
+            .sidebar-header {
+                justify-content: center;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+        
+        /* Стили для модального окна создания заданий */
+        #createAssignmentModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        #createAssignmentModal.active {
+            opacity: 1;
+            visibility: visible;
+            display: flex !important;
+        }
+        
+        .modal-content {
+            background-color: #1a1a1a;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 10px;
+            padding: 30px;
+            position: relative;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+        }
+        
+        #createAssignmentModal.active .modal-content {
+            transform: translateY(0);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.7);
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-close:hover {
+            color: #fff;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #fff;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: #2c2c2c;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 5px;
+            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            border-color: #e74c3c;
+            outline: none;
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .file-upload {
+            position: relative;
+        }
+        
+        .file-upload-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 5px;
+            padding: 20px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload-label:hover {
+            border-color: #e74c3c;
+        }
+        
+        .file-upload-label i {
+            font-size: 30px;
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+        
+        .file-upload input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .file-name {
+            margin-top: 10px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .modal-btn {
+            padding: 12px 20px;
+            border-radius: 5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .modal-btn.cancel {
+            background-color: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+        }
+        
+        .modal-btn.cancel:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        
+        .modal-btn.create {
+            background-color: #e74c3c;
+            color: #fff;
+        }
+        
+        .modal-btn.create:hover {
+            background-color: #c0392b;
+        }
+        
+        .create-assignment-btn {
+            background-color: #e74c3c;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .create-assignment-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .tab-btn.active {
+            background-color: #e74c3c;
+        }
+        
+        .tab-btn:hover:not(.active) {
+            background-color: rgba(231, 76, 60, 0.3);
+        }
+        
+        .btn-primary {
+            background-color: #e74c3c;
+            color: #fff;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background-color: #c0392b;
+        }
+        
+        /* Стили для быстрых действий */
+        .quick-actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .create-assignment-btn {
+            background-color: #e74c3c;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .create-assignment-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .export-grades-btn {
+            background-color: transparent;
+            color: #fff;
+            border: 1px solid #e74c3c;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .export-grades-btn:hover {
+            background-color: rgba(231, 76, 60, 0.2);
+        }
+        
+        /* Стили для секций */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        /* Стили для списка заданий */
+        .assignments-section {
+            background-color: rgba(26, 26, 26, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .assignments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .assignment-card {
+            background-color: rgba(26, 26, 26, 0.9);
+            border-radius: 8px;
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            transition: transform 0.3s ease;
+        }
+        
+        .assignment-card:hover {
+            transform: translateX(5px);
+        }
+        
+        .assignment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .assignment-title {
+            font-weight: 600;
+            color: #fff;
+            font-size: 18px;
+        }
+        
+        .assignment-status {
+            font-size: 12px;
+            color: #e74c3c;
+        }
+        
+        .assignment-description {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 10px;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+        
+        .assignment-details {
+            display: flex;
+            gap: 15px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+        }
+        
+        .assignment-detail {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .assignment-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        /* Стили для списка работ на проверке */
+        .reviews-section {
+            background-color: rgba(26, 26, 26, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .reviews-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .submission-card {
+            background-color: rgba(26, 26, 26, 0.9);
+            border-radius: 8px;
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            transition: transform 0.3s ease;
+        }
+        
+        .submission-card:hover {
+            transform: translateX(5px);
+        }
+        
+        .submission-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .submission-title {
+            font-weight: 600;
+            color: #fff;
+            font-size: 18px;
+        }
+        
+        .submission-date {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .submission-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .submission-student {
+            color: #e74c3c;
+        }
+        
+        .submission-ai-grade {
+            color: #e74c3c;
+        }
+        
+        .submission-confidence {
+            color: #2ecc71;
+        }
+        
+        .submission-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        /* Стили для модального окна */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .modal.active {
+            display: flex;
+            opacity: 1;
+        }
+        
+        .modal-content {
+            background-color: #1a1a1a;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .modal-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+            margin: 0;
+        }
+        
+        .modal-close {
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .modal-close:hover {
+            color: #e74c3c;
+        }
+        
+        /* Стили для формы создания задания */
+        #assignmentForm {
+            padding: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #fff;
+        }
+        
+        .form-group input[type="text"],
+        .form-group input[type="date"],
+        .form-group input[type="number"],
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 15px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #e74c3c;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .file-upload {
+            position: relative;
+            margin-top: 10px;
+        }
+        
+        .file-upload-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 15px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload-label:hover {
+            border-color: #e74c3c;
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+        
+        .file-upload input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-outline:hover {
+            border-color: #fff;
+        }
+        
+        .btn-primary {
+            background-color: #e74c3c;
+            color: #fff;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background-color: #c0392b;
+        }
+        
+        .tab-btn.active {
+            background-color: #e74c3c;
+        }
+        
+        .tab-btn:hover:not(.active) {
+            background-color: rgba(231, 76, 60, 0.3);
+        }
+        
+        /* Стили для пустого состояния */
+        .empty-state {
+            padding: 30px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .empty-state i {
+            font-size: 40px;
+            margin-bottom: 10px;
+            color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .empty-state p {
+            font-size: 16px;
+        }
+        
+        @media (max-width: 992px) {
+            .dashboard-sidebar {
+                transform: translateX(-250px);
+                z-index: 1000;
+            }
+            
+            .dashboard-sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .dashboard-main {
+                margin-left: 0;
+            }
+            
+            .menu-toggle {
+                display: block;
+            }
+            
+            .sidebar-header {
+                justify-content: center;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+        
+        .badge-pill.badge-primary {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+        
+        .template-card.active {
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .module-title i {
+            margin-right: 8px;
+            color: #e74c3c;
+        }
+        
+        .new-badge {
+            color: #e74c3c;
+        }
+        
+        /* Additional styles for export Excel button */
+        .section-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .export-excel-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .export-excel-btn:hover {
+            background-color: #2ecc71;
+            transform: translateY(-2px);
+        }
+        
+        .export-excel-btn i {
+            font-size: 16px;
+        }
+        
+        /* Modal for export selection */
+        .export-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+        }
+        
+        .export-modal-content {
+            background-color: #1e293b;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 400px;
+            max-width: 90%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .export-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .export-modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .export-modal-close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        
+        .export-modal-close:hover {
+            color: #e74c3c;
+        }
+        
+        .export-assignment-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        
+        .export-assignment-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            background-color: #2c3e50;
+            display: flex;
+            align-items: center;
+        }
+        
+        .export-assignment-item input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        
+        .export-assignment-item label {
+            flex: 1;
+            cursor: pointer;
+        }
+        
+        .export-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .export-cancel-btn, .export-confirm-btn {
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .export-cancel-btn {
+            background-color: #34495e;
+            color: #fff;
+        }
+        
+        .export-confirm-btn {
+            background-color: #27ae60;
+            color: #fff;
+        }
+        
+        .export-cancel-btn:hover {
+            background-color: #2c3e50;
+        }
+        
+        .export-confirm-btn:hover {
+            background-color: #2ecc71;
+        }
+        
+        /* Fix for assignment action buttons - ensure NO white background */
+        .assignment-card .assignment-actions {
+            background-color: transparent !important;
+            border-top: none !important;
+            padding: 0 !important;
+            margin-top: 15px !important;
+            display: flex !important;
+            gap: 10px !important;
+            justify-content: flex-end !important;
+        }
+        
+        .assignment-card .btn {
+            color: white !important;
+            padding: 10px 15px !important;
+            border-radius: 4px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+        }
+        
+        .assignment-card .btn-primary {
+            background-color: #e74c3c !important;
+            border: none !important;
+        }
+        
+        .assignment-card .btn-danger {
+            background-color: #e74c3c !important;
+            border: none !important;
+        }
+        
+        .assignment-card .btn-outline {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+        
+        /* Hide edit buttons */
+        .edit-btn, 
+        button[data-id].edit-btn,
+        .assignment-card .btn-outline.edit-btn {
+            display: none !important;
+        }
+        
+        /* Make the remaining buttons fill the space */
+        .assignment-actions .btn {
+            flex: 1 !important;
+        }
+    </style>
+</head>
+<body style="background: #121212 url('images/background.jpg') no-repeat center center fixed; background-size: cover; position: relative;">
+    <!-- Overlay for darkening the background -->
+    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.75); z-index: 0;"></div>
+    
+    <div class="dashboard-container" style="position: relative; z-index: 1;">
+        <!-- Sidebar -->
+        <div class="dashboard-sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2 class="logo-sidebar">ProofMate</h2>
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <h3 class="user-name" id="userName">Загрузка...</h3>
+                <p class="user-role teacher">Преподаватель</p>
+            </div>
+            
+            <div class="sidebar-menu">
+                <div class="menu-item active">
+                    <i class="fas fa-home"></i>
+                    <span>Главная</span>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-tasks"></i>
+                    <span>Задания</span>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Проверка</span>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-file-export"></i>
+                    <span>Экспорт</span>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Аналитика</span>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Настройки</span>
+                </div>
+                <div class="menu-item" id="logoutBtn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Выход</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="dashboard-main">
+            <div class="dashboard-header">
+                <h1 class="page-title">Панель Преподавателя</h1>
+                <p class="welcome-message">Добро пожаловать, <span id="welcomeName">Преподаватель</span>! У вас 5 решений, ожидающих проверки.</p>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="action-buttons" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button class="action-btn primary create-assignment-btn" id="createAssignmentBtn1" onclick="showCreateAssignmentModal()" style="display: flex; align-items: center; padding: 10px 15px; border: none; border-radius: 5px; background-color: #e74c3c; color: white; font-weight: 500; cursor: pointer;">
+                    <i class="fas fa-plus" style="margin-right: 8px;"></i>
+                    Создать Новое Задание
+                </button>
+                <button class="action-btn secondary export-grades-btn" id="exportGradesBtn" style="display: flex; align-items: center; padding: 10px 15px; border: none; border-radius: 5px; background-color: rgba(231, 76, 60, 0.2); color: white; font-weight: 500; cursor: pointer;">
+                    <i class="fas fa-file-export" style="margin-right: 8px;"></i>
+                    Экспорт Оценок
+                </button>
+                <button class="action-btn secondary reset-data-btn" id="resetDataBtn" style="display: flex; align-items: center; padding: 10px 15px; border: none; border-radius: 5px; background-color: #c0392b; color: white; font-weight: 500; cursor: pointer;">
+                    <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>
+                    Сбросить Данные
+                </button>
+            </div>
+            
+            <!-- Stats Section -->
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-card-title">Созданные Задания</div>
+                        <div class="stat-card-icon">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-value">15</div>
+                    <div class="stat-card-label">Всего</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-card-title">Ожидают Проверки</div>
+                        <div class="stat-card-icon">
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-value">5</div>
+                    <div class="stat-card-label">Решений</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-card-title">Студенты</div>
+                        <div class="stat-card-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-value">32</div>
+                    <div class="stat-card-label">Активных</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-card-title">Средняя Оценка</div>
+                        <div class="stat-card-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-value">7.8</div>
+                    <div class="stat-card-label">Из 10</div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <button class="create-assignment-btn" id="createAssignmentBtn2" onclick="showCreateAssignmentModal()">
+                    <i class="fas fa-plus"></i>
+                    Создать Новое Задание
+                </button>
+                <button class="export-grades-btn">
+                    <i class="fas fa-file-export"></i>
+                    Экспорт Оценок
+                </button>
+                <button class="reset-data-btn" id="resetDataBtn" style="background-color: #e74c3c;">
+                    <i class="fas fa-sync-alt"></i>
+                    Сбросить Данные
+                </button>
+            </div>
+            
+            <!-- Assignments Section -->
+            <div class="assignments-section">
+                <div class="section-header">
+                    <h2 class="section-title">Задания</h2>
+                    <div class="section-actions">
+                        <button class="export-excel-btn" id="exportExcelBtn" title="Экспорт отчетов заданий в Excel">
+                            <i class="fas fa-file-excel"></i> Экспорт в Excel
+                        </button>
+                        <div class="tab-buttons">
+                            <button class="tab-btn active">Все</button>
+                            <button class="tab-btn">Активные</button>
+                            <button class="tab-btn">Прошедшие</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="assignments-list">
+                    <!-- Assignments will be loaded here by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Reviews Section -->
+            <div class="reviews-section">
+                <div class="section-header">
+                    <h2 class="section-title">Решения для Проверки</h2>
+                </div>
+                
+                <div class="reviews-list">
+                    <!-- Submissions will be loaded here by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Create Assignment Modal -->
+    <div id="createAssignmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Создать Новое Задание</h2>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            
+            <div id="assignmentForm" class="assignment-form">
+                <div class="form-group">
+                    <label for="assignmentTitle">Название Задания</label>
+                    <input type="text" id="assignmentTitle" placeholder="Введите название для задания" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="assignmentDescription">Описание</label>
+                    <textarea id="assignmentDescription" placeholder="Предоставьте подробные инструкции для студентов"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="assignmentDueDate">Срок Сдачи</label>
+                    <input type="date" id="assignmentDueDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="perfectSolution">Эталонное Решение</label>
+                    <div class="file-upload">
+                        <label class="file-upload-label">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Загрузите эталонное решение в формате .ipynb</span>
+                            <input type="file" id="perfectSolutionFile" accept=".ipynb">
+                        </label>
+                    </div>
+                    <div class="selected-file" id="selectedPerfectSolution" style="display: none; margin-top: 10px; padding: 10px; background-color: rgba(231, 76, 60, 0.1); border-radius: 5px;">
+                        <div class="file-icon">
+                            <i class="fas fa-file-code"></i>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name" id="perfectSolutionFileName">Файл не выбран</div>
+                        </div>
+                        <button type="button" class="remove-file" id="removePerfectSolution">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="form-help">Загрузите эталонное решение в формате .ipynb. Это будет использоваться для оценки работ студентов.</div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="modal-btn cancel" id="cancelBtn">Отмена</button>
+                    <button type="button" class="modal-btn create" id="createAssignmentSubmitBtn" onclick="submitAssignmentForm(event)">Создать Задание</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Export Modal -->
+    <div id="exportModal" class="export-modal">
+        <div class="export-modal-content">
+            <div class="export-modal-header">
+                <h3 class="export-modal-title">Экспорт Отчетов в Excel</h3>
+                <button class="export-modal-close">&times;</button>
+            </div>
+            <p>Выберите задания для экспорта:</p>
+            <div class="export-assignment-list" id="exportAssignmentList">
+                <!-- Assignment items will be added here dynamically -->
+            </div>
+            <div class="export-modal-actions">
+                <button class="export-cancel-btn">Отмена</button>
+                <button class="export-confirm-btn">Экспортировать Выбранное</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Load app.js script with cache-busting timestamp -->
+    <script>
+        // Add a script tag with timestamp for cache-busting
+        const timestamp = new Date().getTime();
+        const appScript = document.createElement('script');
+        appScript.src = `app.js?v=${timestamp}`;
+        document.body.appendChild(appScript);
+    </script>
+    
+    <script>
+        // Initialize global variables
+        if (typeof window.assignments === 'undefined') {
+            window.assignments = JSON.parse(localStorage.getItem('demoAssignments') || '[]');
+            console.log('Инициализирован глобальный массив заданий из localStorage:', window.assignments.length);
+        }
+        
+        if (typeof window.submissions === 'undefined') {
+            window.submissions = JSON.parse(localStorage.getItem('demoSubmissions') || '[]');
+            console.log('Инициализирован глобальный массив решений из localStorage:', window.submissions.length);
+        }
+        
+        // Hide all edit buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            // Hide all edit buttons that might be rendered
+            const editButtons = document.querySelectorAll('.edit-btn, button[data-id].edit-btn, .assignment-card .btn-outline.edit-btn');
+            editButtons.forEach(button => {
+                button.style.display = 'none';
+            });
+            
+            // Check periodically for any new edit buttons and hide them too
+            setInterval(() => {
+                const newEditButtons = document.querySelectorAll('.edit-btn, button[data-id].edit-btn, .assignment-card .btn-outline.edit-btn');
+                newEditButtons.forEach(button => {
+                    button.style.display = 'none';
+                });
+            }, 1000);
+        });
+        
+        // Direct modal handling function
+        function showCreateAssignmentModal() {
+            console.log("Вызвана функция showCreateAssignmentModal");
+            const modal = document.getElementById('createAssignmentModal');
+            if (modal) {
+                modal.classList.add('active');
+                modal.style.display = 'flex';
+                modal.style.opacity = '1';
+                modal.style.visibility = 'visible';
+            } else {
+                console.error("Элемент модального окна не найден");
+            }
+        }
+        
+        // Function to reset the assignment form
+        function resetAssignmentForm() {
+            // Reset all input fields
+            document.getElementById('assignmentTitle').value = '';
+            document.getElementById('assignmentDescription').value = '';
+            document.getElementById('assignmentDueDate').value = '';
+            document.getElementById('perfectSolutionFile').value = '';
+            
+            // Hide the selected file display
+            document.getElementById('selectedPerfectSolution').style.display = 'none';
+        }
+        
+        // Direct form submission handler
+        function submitAssignmentForm(event) {
+            event.preventDefault();
+            console.log("Вызван обработчик отправки формы");
+            
+            // Get form data
+            const title = document.getElementById('assignmentTitle').value;
+            const description = document.getElementById('assignmentDescription').value;
+            const dueDate = document.getElementById('assignmentDueDate').value;
+            const perfectSolutionFile = document.getElementById('perfectSolutionFile');
+            
+            // Validate form fields
+            if (!title || !description || !dueDate) {
+                alert('Пожалуйста, заполните все обязательные поля');
+                return;
+            }
+            
+            if (!perfectSolutionFile || !perfectSolutionFile.files || perfectSolutionFile.files.length === 0) {
+                alert('Пожалуйста, загрузите файл эталонного решения (.ipynb)');
+                return;
+            }
+            
+            // Get the file name
+            const perfectSolution = perfectSolutionFile.files[0].name;
+            console.log(`Создание задания: ${title}, ${description}, ${dueDate}, ${perfectSolution}`);
+            
+            try {
+                // Get existing assignments from localStorage
+                const assignments = JSON.parse(localStorage.getItem('demoAssignments') || '[]');
+                console.log('Текущие задания:', assignments);
+                
+                // Create new assignment object
+                const newAssignment = {
+                    id: assignments.length + 1,
+                    title: title,
+                    description: description,
+                    dueDate: dueDate,
+                    perfectSolution: perfectSolution,
+                    createdAt: new Date().toISOString(),
+                    createdBy: localStorage.getItem('userEmail') || 'teacher@example.com',
+                    maxPoints: 10,
+                    submissionsCount: 0,
+                    reviewedCount: 0
+                };
+                
+                // Add to assignments array
+                assignments.push(newAssignment);
+                
+                // Save back to localStorage
+                localStorage.setItem('demoAssignments', JSON.stringify(assignments));
+                console.log('Обновлены задания в localStorage:', assignments);
+                
+                // Close the modal and reset the form
+                const modal = document.getElementById('createAssignmentModal');
+                modal.classList.remove('active');
+                modal.style.display = 'none';
+                resetAssignmentForm();
+                
+                // Show success message
+                alert(`Задание "${title}" успешно создано!`);
+                
+                // Reload page to show new assignment
+                setTimeout(() => {
+                    location.reload();
+                }, 500);
+                
+            } catch (error) {
+                console.error('Ошибка при создании задания:', error);
+                alert('Не удалось создать задание: ' + error.message);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Событие DOMContentLoaded - настройка обработчиков событий");
+            
+            // Debug check for the Create Assignment modal
+            const modalCheck = document.getElementById('createAssignmentModal');
+            console.log("Модальное окно создания задания существует:", !!modalCheck);
+            
+            // Получаем данные пользователя из localStorage
+            const userName = localStorage.getItem('userName') || 'Преподаватель';
+            const userEmail = localStorage.getItem('userEmail') || 'teacher@example.com';
+            const userRole = localStorage.getItem('userRole') || 'teacher';
+            
+            // IMPORTANT: Don't redirect automatically - let app.js handle this
+            // This prevents redirect loops between dashboards
+            
+            // Обновляем имя пользователя в интерфейсе
+            document.getElementById('userName').textContent = userName;
+            document.getElementById('welcomeName').textContent = userName;
+            
+            // Получаем ссылки на элементы модального окна
+            const createBtn1 = document.getElementById('createAssignmentBtn1');
+            const createBtn2 = document.getElementById('createAssignmentBtn2');
+            const modal = document.getElementById('createAssignmentModal');
+            const modalClose = document.querySelector('.modal-close');
+            const cancelBtn = document.getElementById('cancelBtn');
+            
+            console.log("Кнопка 1 существует:", !!createBtn1);
+            console.log("Кнопка 2 существует:", !!createBtn2);
+            
+            // Setup file upload for perfect solution
+            const perfectSolutionFile = document.getElementById('perfectSolutionFile');
+            const selectedPerfectSolution = document.getElementById('selectedPerfectSolution');
+            const perfectSolutionFileName = document.getElementById('perfectSolutionFileName');
+            const removePerfectSolution = document.getElementById('removePerfectSolution');
+            
+            // Handle file selection
+            if (perfectSolutionFile) {
+                perfectSolutionFile.addEventListener('change', function() {
+                    if (this.files.length > 0) {
+                        perfectSolutionFileName.textContent = this.files[0].name;
+                        selectedPerfectSolution.style.display = 'flex';
+                    }
+                });
+            }
+            
+            // Handle file removal
+            if (removePerfectSolution) {
+                removePerfectSolution.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    perfectSolutionFile.value = '';
+                    selectedPerfectSolution.style.display = 'none';
+                });
+            }
+            
+            // Настраиваем обработчики событий модального окна для обеих кнопок создания задания
+            if (createBtn1) {
+                createBtn1.addEventListener('click', function() {
+                    console.log("Create button 1 clicked");
+                    // Try classList first
+                    modal.classList.add('active');
+                    
+                    // Alternative method using direct style manipulation
+                    modal.style.display = 'flex';
+                    modal.style.opacity = '1';
+                    console.log("Modal should be visible now");
+                });
+            }
+            
+            if (createBtn2) {
+                createBtn2.addEventListener('click', function() {
+                    console.log("Create button 2 clicked");
+                    // Try classList first
+                    modal.classList.add('active');
+                    
+                    // Alternative method using direct style manipulation
+                    modal.style.display = 'flex';
+                    modal.style.opacity = '1';
+                    console.log("Modal should be visible now");
+                });
+            }
+            
+            if (modalClose) {
+                modalClose.addEventListener('click', function() {
+                    // Try classList first
+                    modal.classList.remove('active');
+                    
+                    // Alternative method
+                    modal.style.opacity = '0';
+                    setTimeout(() => {
+                        modal.style.display = 'none';
+                    }, 300); // Match the transition time
+                });
+            }
+            
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function() {
+                    // Try classList first
+                    modal.classList.remove('active');
+                    
+                    // Alternative method
+                    modal.style.opacity = '0';
+                    setTimeout(() => {
+                        modal.style.display = 'none';
+                        resetAssignmentForm(); // Reset the form when canceling
+                    }, 300); // Match the transition time
+                });
+            }
+            
+            // Add a reset button to the page
+            const resetButton = document.createElement('button');
+            resetButton.id = 'resetDemoButton';
+            resetButton.innerHTML = '<i class="fas fa-trash"></i> RESET DEMO DATA';
+            resetButton.style.position = 'fixed';
+            resetButton.style.bottom = '10px';
+            resetButton.style.right = '10px';
+            resetButton.style.zIndex = '9999';
+            resetButton.style.backgroundColor = '#ff4444';
+            resetButton.style.color = 'white';
+            resetButton.style.padding = '10px 15px';
+            resetButton.style.border = 'none';
+            resetButton.style.borderRadius = '5px';
+            resetButton.style.fontWeight = 'bold';
+            resetButton.style.cursor = 'pointer';
+            
+            resetButton.addEventListener('click', function() {
+                if (confirm('This will reset all demo data and reload the page. Are you sure?')) {
+                    console.log('Clearing localStorage...');
+                    localStorage.clear();
+                    console.log('localStorage cleared! Reloading page...');
+                    location.reload();
+                }
+            });
+            
+            document.body.appendChild(resetButton);
+            
+            // Make sure event handlers are explicitly setup for teacher dashboard as a fallback
+            setTimeout(() => {
+                console.log("Explicitly calling setupTeacherDashboardEventHandlers from the HTML");
+                if (typeof setupTeacherDashboardEventHandlers === 'function') {
+                    setupTeacherDashboardEventHandlers();
+                }
+                
+                // Force update of assignments list
+                if (typeof updateAssignmentsList === 'function') {
+                    updateAssignmentsList();
+                }
+                
+                // Direct event binding for delete buttons as a last resort
+                document.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('delete-assignment-btn') || e.target.closest('.delete-assignment-btn')) {
+                        const button = e.target.classList.contains('delete-assignment-btn') ? e.target : e.target.closest('.delete-assignment-btn');
+                        const assignmentId = parseInt(button.getAttribute('data-id'));
+                        console.log(`Delete button clicked for assignment ${assignmentId} from direct HTML binding`);
+                        
+                        // Confirm before deleting
+                        if (confirm('Are you sure you want to delete this assignment? This will also delete all student submissions for this assignment and cannot be undone.')) {
+                            // Find deleteAssignment function and call it
+                            if (typeof deleteAssignment === 'function') {
+                                if (deleteAssignment(assignmentId)) {
+                                    alert('Assignment deleted successfully');
+                                } else {
+                                    alert('Failed to delete assignment. Please try again.');
+                                }
+                            } else {
+                                alert('Delete function not found. Please make sure the app.js file is loaded correctly.');
+                            }
+                        }
+                    }
+                });
+            }, 1000); // Wait 1 second to ensure app.js has loaded
+        });
+    </script>
+</body>
+</html> 

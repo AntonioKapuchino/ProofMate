@@ -88,5 +88,26 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Optional: ignore package-lock.json if you prefer
-# package-lock.json 
+# Debug and temporary files
+tmp/
+*.tmp
+*.bak
+debug_*.ipynb
+response_debug_*.txt
+direct_analysis_result.json
+analysis_result.json
+
+# MongoDB
+*.mongodb
+
+# Test files
+test_*.html
+test_*.js
+test_*.py
+test_*.ipynb
+
+# Sensitive data
+*_key.*
+*_keys.*
+*_secret.*
+*_secrets.* 

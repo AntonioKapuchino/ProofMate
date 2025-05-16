@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/error');
 
@@ -12,13 +13,38 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
-  credentials: true
+  origin: '*', // Allow all origins during development
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
 }));
 
-// Routes
+// Serve static files from parent directory
+app.use(express.static(path.join(__dirname, '..')));
+
+// API Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
+
+// Root API route
+app.get('/api', (req, res) => {
+  res.json({ 
+    message: 'Welcome to ProofMate API',
+    status: 'Server is running correctly',
+    endpoints: {
+      auth: '/api/auth',
+      users: '/api/users'
+    }
+  });
+});
+
+// Catch all other routes and serve the frontend
+app.get('*', (req, res) => {
+  if (req.url.startsWith('/api')) {
+    return res.status(404).json({ success: false, error: 'API endpoint not found' });
+  }
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
 
 // Error Handler (Should be last middleware)
 app.use(errorHandler);

@@ -340,7 +340,15 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 closeModal();
                 // Would redirect to dashboard in a real app
-                alert(`Successfully logged in as ${role}`);
+                localStorage.setItem('userRole', role);
+                localStorage.setItem('userEmail', email);
+                localStorage.setItem('userName', email.split('@')[0]);
+                localStorage.setItem('isLoggedIn', 'true');
+                if (role === 'teacher') {
+                    window.location.href = 'teacher-dashboard.html';
+                } else {
+                    window.location.href = 'student-dashboard.html';
+                }
             }, 1500);
         }, 1000);
     });
@@ -351,19 +359,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = registerForm.querySelector('#register-name').value;
         const email = registerForm.querySelector('#register-email').value;
         const password = registerForm.querySelector('#register-password').value;
+        const confirmPassword = registerForm.querySelector('#confirmPassword').value;
+        const termsAgree = registerForm.querySelector('#termsAgree').checked;
         const role = registerForm.querySelector('.role-btn.active').getAttribute('data-role');
-        const agreeTerms = registerForm.querySelector('#agree-terms').checked;
         
         // Simple validation
-        if (!name || !email || !password) {
+        if (!name || !email || !password || !confirmPassword) {
             showFormMessage(registerForm, 'Please fill in all required fields', 'error');
             registerForm.classList.add('error');
             setTimeout(() => registerForm.classList.remove('error'), 500);
             return;
         }
         
-        if (!agreeTerms) {
-            showFormMessage(registerForm, 'You must agree to the terms and conditions', 'error');
+        if (password !== confirmPassword) {
+            showFormMessage(registerForm, 'Passwords do not match', 'error');
+            return;
+        }
+        
+        if (!termsAgree) {
+            showFormMessage(registerForm, 'You must agree to the Terms and Conditions', 'error');
             return;
         }
         
@@ -398,7 +412,15 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 closeModal();
                 // Would redirect to dashboard in a real app
-                alert(`Account created successfully as ${role}`);
+                localStorage.setItem('userRole', role);
+                localStorage.setItem('userEmail', email);
+                localStorage.setItem('userName', name);
+                localStorage.setItem('isLoggedIn', 'true');
+                if (role === 'teacher') {
+                    window.location.href = 'teacher-dashboard.html';
+                } else {
+                    window.location.href = 'student-dashboard.html';
+                }
             }, 1500);
         }, 1000);
     });
@@ -427,6 +449,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 5000);
         }
     }
+
+    // Check login status
+    checkLoginStatus();
 });
 
 // Initialize future animated elements when they're added to the page
@@ -449,4 +474,116 @@ function initAnimations() {
         element.classList.add('observed');
         fadeInObserver.observe(element);
     });
-} 
+}
+
+// Check login status
+function checkLoginStatus() {
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const userRole = localStorage.getItem('userRole');
+    
+    // If user is logged in and on the main page, redirect to the appropriate dashboard
+    if (isLoggedIn && window.location.pathname === '/index.html') {
+        if (userRole === 'teacher') {
+            window.location.href = 'teacher-dashboard.html';
+        } else {
+            window.location.href = 'student-dashboard.html';
+        }
+    }
+}
+
+// Feature Cards Animation
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate feature cards on scroll
+    const featureCards = document.querySelectorAll('.feature-card');
+    
+    function animateElementsOnScroll() {
+        featureCards.forEach(card => {
+            const cardPosition = card.getBoundingClientRect().top;
+            const screenPosition = window.innerHeight / 1.2;
+            
+            if (cardPosition < screenPosition) {
+                card.classList.add('visible');
+            }
+        });
+    }
+    
+    // Initial check on page load
+    setTimeout(animateElementsOnScroll, 500);
+    
+    // Check on scroll
+    window.addEventListener('scroll', animateElementsOnScroll);
+    
+    // Apply animation attributes if not present
+    const featureCardElements = document.querySelectorAll('.feature-card:not([data-animation])');
+    featureCardElements.forEach((card, index) => {
+        if (index % 2 === 0) {
+            card.setAttribute('data-animation', 'slide-up');
+        } else {
+            card.setAttribute('data-animation', 'slide-right');
+        }
+    });
+});
+
+// Advanced animation for matrix elements
+function initMatrixAnimations() {
+    const matrixGrids = document.querySelectorAll('.matrix-grid');
+    
+    matrixGrids.forEach(grid => {
+        const spans = grid.querySelectorAll('span');
+        
+        // Apply random delays to each number
+        spans.forEach(span => {
+            const randomDelay = Math.random() * 2;
+            span.style.animationDelay = `${randomDelay}s`;
+        });
+    });
+}
+
+// Initialize notebook processing animation
+function initNotebookAnimation() {
+    const notebookAnimations = document.querySelectorAll('.notebook-animation');
+    
+    notebookAnimations.forEach(notebook => {
+        const processingDots = notebook.querySelectorAll('.processing-dots span');
+        const cellResults = notebook.querySelector('.cell-result');
+        
+        // Reset and restart animations when visible
+        if (isElementInViewport(notebook)) {
+            // Restart dot animation
+            processingDots.forEach(dot => {
+                dot.style.animation = 'none';
+                setTimeout(() => {
+                    dot.style.animation = '';
+                }, 10);
+            });
+            
+            // Reset result animation
+            if (cellResults) {
+                cellResults.style.animation = 'none';
+                setTimeout(() => {
+                    cellResults.style.animation = 'resultSlideIn 0.5s 2s forwards';
+                }, 10);
+            }
+        }
+    });
+}
+
+// Helper function to check if element is in viewport
+function isElementInViewport(el) {
+    const rect = el.getBoundingClientRect();
+    return (
+        rect.top <= (window.innerHeight || document.documentElement.clientHeight) &&
+        rect.bottom >= 0
+    );
+}
+
+// Initialize all animations when document is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    initMatrixAnimations();
+    
+    // Initialize notebook animations and set up scroll handler
+    initNotebookAnimation();
+    window.addEventListener('scroll', function() {
+        initNotebookAnimation();
+    });
+}); 

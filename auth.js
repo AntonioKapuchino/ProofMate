@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const togglePasswordBtns = document.querySelectorAll('.toggle-password');
     
     // API URL - change this to your server URL
-    const API_URL = 'http://localhost:5000/api';
+    const API_URL = '/api';
     
     // Добавим элементы управления для залогиненного пользователя
     const headerControls = document.querySelector('.header-controls');
@@ -319,66 +319,42 @@ document.addEventListener('DOMContentLoaded', () => {
         userMenuElement = null;
     }
     
-    // Form submission - Login
-    loginForm.addEventListener('submit', async (e) => {
+    // Modify the login form submission event handler
+    loginForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        const email = loginForm.querySelector('#login-email').value;
-        const password = loginForm.querySelector('#login-password').value;
-        const role = loginForm.querySelector('.role-btn.active').getAttribute('data-role');
-        const rememberMe = loginForm.querySelector('#remember-me').checked;
+        // Get form values
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        const role = document.querySelector('.role-btn.active').getAttribute('data-role');
         
-        // Simple validation
-        if (!email || !password) {
-            showFormMessage(loginForm, 'Please fill in all fields', 'error');
-            loginForm.classList.add('error');
-            setTimeout(() => loginForm.classList.remove('error'), 500);
+        // Demo account check - hardcoded for demonstration
+        if (role === 'teacher' && email === 'teacher@example.com' && password === 'password') {
+            // Set teacher account
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('userRole', 'teacher');
+            localStorage.setItem('userName', 'Teacher Account');
+            localStorage.setItem('userEmail', email);
+            
+            // Redirect to teacher dashboard
+            window.location.href = 'teacher-dashboard.html';
             return;
         }
         
-        // Show loading state
-        const submitBtn = loginForm.querySelector('[type="submit"]');
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = 'Logging in...';
-        submitBtn.disabled = true;
-        
-        try {
-            const response = await fetch(`${API_URL}/auth/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    email,
-                    password,
-                    role
-                })
-            });
+        if (role === 'student' && email === 'student@example.com' && password === 'password') {
+            // Set student account
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('userRole', 'student');
+            localStorage.setItem('userName', 'Student Account');
+            localStorage.setItem('userEmail', email);
             
-            const data = await response.json();
-            
-            if (data.success) {
-                showFormMessage(loginForm, 'Login successful!', 'success');
-                
-                // Save token
-                localStorage.setItem('token', data.token);
-                
-                // Close modal and show user UI
-                setTimeout(() => {
-                    closeModal();
-                    showLoggedInUI(data.user);
-                }, 1500);
-            } else {
-                showFormMessage(loginForm, data.error || 'Login failed', 'error');
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-            showFormMessage(loginForm, 'An error occurred during login', 'error');
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
+            // Redirect to student dashboard
+            window.location.href = 'student-dashboard.html';
+            return;
         }
+        
+        // Show error message if credentials don't match
+        showFormMessage(loginForm, 'Invalid email or password. For demo, use teacher@example.com/password or student@example.com/password', 'error');
     });
     
     // Form submission - Register
@@ -395,6 +371,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Validation
         if (!name || !email || !password) {
             showFormMessage(registerForm, 'Please fill in all required fields', 'error');
+            registerForm.classList.add('error');
+            setTimeout(() => registerForm.classList.remove('error'), 500);
+            return;
+        }
+        
+        // Password length validation
+        if (password.length < 8) {
+            showFormMessage(registerForm, 'Password must be at least 8 characters long', 'error');
             registerForm.classList.add('error');
             setTimeout(() => registerForm.classList.remove('error'), 500);
             return;
@@ -420,6 +404,8 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.textContent = 'Creating account...';
         submitBtn.disabled = true;
         
+        console.log(`Attempting to register with: email=${email}, role=${role}`);
+        
         try {
             const response = await fetch(`${API_URL}/auth/register`, {
                 method: 'POST',
@@ -435,7 +421,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
             
+            console.log('Register response status:', response.status);
             const data = await response.json();
+            console.log('Register response data:', data);
             
             if (data.success) {
                 showFormMessage(registerForm, 'Account created successfully! Please check your email for verification.', 'success');
@@ -455,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Registration error:', error);
-            showFormMessage(registerForm, 'An error occurred during registration', 'error');
+            showFormMessage(registerForm, `Connection error: ${error.message}`, 'error');
             submitBtn.textContent = originalText;
             submitBtn.disabled = false;
         }

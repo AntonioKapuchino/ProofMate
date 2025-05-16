@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель студента - ProofMate</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        /* Force background overlay to be visible */
+        body {
+            position: relative;
+            overflow-x: hidden;
+            background: #f5f7fa;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: url('images/background.jpg') no-repeat center center fixed !important;
+            background-size: cover !important;
+            filter: blur(5px) brightness(0.7) !important;
+            opacity: 0.3 !important;
+            z-index: -1 !important;
+            pointer-events: none !important;
+        }
+        
+        .background-overlay {
+            display: none; /* Hide the original overlay since we're using body::before */
+        }
+        
+        /* Make content stand out against background */
+        .dashboard-container {
+            position: relative !important;
+            z-index: 1 !important;
+        }
+        
+        .sidebar {
+            background-color: rgba(25, 42, 86, 0.95) !important;
+        }
+        
+        .main-content {
+            background-color: rgba(255, 255, 255, 0.9) !important;
+        }
+        
+        .card, .assignments-list .assignment-card, .submissions-list .submission-card {
+            background-color: #1a1a1a !important;
+            border-radius: 8px !important;
+            padding: 20px !important;
+            margin-bottom: 15px !important;
+            border-left: 4px solid #e74c3c !important;
+            transition: transform 0.3s ease !important;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+        }
+        
+        /* Дополнительные стили для панели управления */
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+            background-color: #232323; /* Changed to dark grey */
+        }
+        
+        .dashboard-sidebar {
+            width: 250px;
+            background-color: #1a1a1a; /* Changed to darker grey */
+            padding: 20px 0;
+            color: #fff;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo-sidebar {
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+            margin: 0;
+            letter-spacing: 1px;
+        }
+        
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        .user-info {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            background-color: #2d2d2d; /* Updated to match dark grey scheme */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: #e74c3c;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 18px;
+        }
+        
+        .user-role {
+            color: #e74c3c;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .sidebar-menu {
+            padding: 20px;
+        }
+        
+        .menu-item {
+            padding: 12px 15px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .menu-item:hover, .menu-item.active {
+            background-color: rgba(231, 76, 60, 0.2);
+        }
+        
+        .menu-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .dashboard-main {
+            flex: 1;
+            margin-left: 250px;
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .dashboard-header {
+            margin-bottom: 30px;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        
+        .welcome-message {
+            color: rgba(255,255,255,0.7);
+            font-size: 16px;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background-color: #2a2a2a; /* Changed to slightly lighter grey */
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card-title {
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .stat-card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            background-color: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+        
+        .stat-card-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        
+        .stat-card-label {
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+        }
+        
+        .assignments-container {
+            background-color: #111;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .assignments-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .assignments-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .assignments-filter {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .filter-btn {
+            background-color: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 5px;
+            padding: 8px 15px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-btn.active, .filter-btn:hover {
+            background-color: #e74c3c;
+            border-color: #e74c3c;
+        }
+        
+        .assignments-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        .assignment-card {
+            display: flex;
+            flex-direction: column;
+            background-color: rgba(26, 26, 26, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #e74c3c;
+            transition: all 0.3s ease;
+        }
+        
+        .assignment-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .assignment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .assignment-title {
+            font-weight: 600;
+            color: #fff;
+            font-size: 18px;
+        }
+        
+        .assignment-status {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        .status-pending {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+        
+        .status-completed {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+        
+        .status-overdue {
+            background-color: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+        }
+        
+        .assignment-details {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .assignment-detail {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .assignment-detail i {
+            font-size: 12px;
+        }
+        
+        .assignment-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+        
+        .submission-card {
+            background-color: rgba(26, 26, 26, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #e67e22;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .submission-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .submission-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .submission-title {
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .submission-date {
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+        }
+        
+        .submission-info {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .submission-status {
+            font-weight: 500;
+        }
+        
+        .feedback-available {
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab-btn {
+            padding: 8px 15px;
+            background-color: rgba(26, 26, 26, 0.8);
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-btn.active {
+            background-color: #e74c3c;
+        }
+        
+        .tab-btn:hover:not(.active) {
+            background-color: rgba(231, 76, 60, 0.3);
+        }
+        
+        @media (max-width: 992px) {
+            .dashboard-sidebar {
+                transform: translateX(-250px);
+                z-index: 1000;
+            }
+            
+            .dashboard-sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .dashboard-main {
+                margin-left: 0;
+            }
+            
+            .menu-toggle {
+                display: block;
+            }
+            
+            .sidebar-header {
+                justify-content: center;
+            }
+        }
+        
+        /* Стили для кнопки загрузки */
+        .upload-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #e74c3c;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-left: auto;
+        }
+        
+        .upload-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .upload-btn i {
+            margin-right: 5px;
+        }
+        
+        /* Modal CSS */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        
+        .modal.active {
+            display: flex !important;
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: #1a1a1a;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .modal-title {
+            margin: 0;
+            font-weight: 600;
+            font-size: 20px;
+            color: #fff;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .close-modal:hover {
+            color: #e74c3c;
+        }
+        
+        .modal-body {
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        /* Form styling in dark theme */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .file-upload-container {
+            position: relative;
+            margin-bottom: 10px;
+        }
+        
+        .file-upload-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            padding: 12px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px dashed rgba(231, 76, 60, 0.5);
+        }
+        
+        .file-upload-label:hover {
+            background-color: rgba(231, 76, 60, 0.3);
+        }
+        
+        .file-upload-label i {
+            margin-right: 10px;
+        }
+        
+        .file-upload-input {
+            position: absolute;
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            z-index: -1;
+        }
+        
+        .selected-file {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            background-color: rgba(40, 167, 69, 0.1);
+            padding: 8px 12px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border: 1px solid rgba(40, 167, 69, 0.3);
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        #removeSolution {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            padding: 5px;
+        }
+        
+        #removeSolution:hover {
+            color: #dc3545;
+        }
+        
+        .help-text {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 5px;
+        }
+        
+        textarea {
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            padding: 10px;
+            color: rgba(255, 255, 255, 0.9);
+            font-family: inherit;
+            resize: vertical;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: rgba(231, 76, 60, 0.5);
+            box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
+        }
+        
+        .btn {
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+        }
+        
+        .btn-outline:hover {
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+        
+        .cancel-btn {
+            background-color: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+        
+        .cancel-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Add debug button for testing */
+        #debugButton {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: red;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 9999;
+            cursor: pointer;
+        }
+        
+        /* Fix for assignment action buttons - ensure NO white background */
+        .assignment-card .assignment-actions {
+            background-color: transparent !important;
+            border-top: none !important;
+            padding: 0 !important;
+            margin-top: 15px !important;
+            display: flex !important;
+            gap: 10px !important;
+            justify-content: space-between !important;
+        }
+        
+        .assignment-card .btn {
+            color: white !important;
+            padding: 10px 15px !important;
+            border-radius: 4px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            flex: 1 !important;
+        }
+        
+        .assignment-card .btn-primary,
+        .assignment-card .submit-solution-btn {
+            background-color: #e74c3c !important;
+            border: none !important;
+        }
+        
+        .assignment-card .btn-outline,
+        .assignment-card .details-btn {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+        
+        /* Styling for the student dashboard cards and text */
+        .student-assignments-list .assignment-card,
+        .student-submissions-list .submission-card {
+            color: white !important;
+            background-color: #1a1a1a !important;
+        }
+        
+        .student-assignments-list .assignment-title,
+        .student-submissions-list .submission-title {
+            color: white !important;
+            font-weight: 600 !important;
+        }
+        
+        .student-assignments-list .assignment-description,
+        .student-submissions-list .submission-description {
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+        
+        .student-assignments-list .assignment-info,
+        .student-submissions-list .submission-info {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+    </style>
+</head>
+<body style="background: #121212 url('images/background.jpg') no-repeat center center fixed; background-size: cover; position: relative;">
+    <!-- Overlay for darkening the background -->
+    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.75); z-index: 0;"></div>
+    
+    <div class="dashboard-container" style="position: relative; z-index: 1;">
+        <!-- Sidebar -->
+        <div class="dashboard-sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2 class="logo-sidebar">ProofMate</h2>
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <h3 class="user-name" id="userName">Loading...</h3>
+                <p class="user-role student">Student</p>
+            </div>
+            
+            <div class="sidebar-menu">
+                <div class="menu-item active">
+                    <i class="fas fa-home"></i>
+                    <span>Главная</span>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-tasks"></i>
+                    <span>Задания</span>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Отправки</span>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Прогресс</span>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-star"></i>
+                    <span>Оценки</span>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Настройки</span>
+                </div>
+                <div class="menu-item" id="logoutBtn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Выход</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="dashboard-main">
+            <div class="dashboard-header">
+                <h1 class="page-title">Панель студента</h1>
+                <p class="welcome-message">Добро пожаловать, <span id="welcomeName">Студент</span>! У вас 3 предстоящих задания на этой неделе.</p>
+                <button id="refreshStatsBtn" class="refresh-btn" style="background-color: transparent; border: none; color: rgba(255,255,255,0.6); font-size: 14px; cursor: pointer; padding: 5px 10px;">
+                    <i class="fas fa-sync-alt"></i> Обновить статистику
+                </button>
+            </div>
+            
+            <!-- Stats Section -->
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-card-title">Всего заданий</div>
+                        <div class="stat-card-icon">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-value">12</div>
+                    <div class="stat-card-label">За все время</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-card-title">Выполнено</div>
+                        <div class="stat-card-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-value">8</div>
+                    <div class="stat-card-label">Заданий</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-card-title">В процессе</div>
+                        <div class="stat-card-icon">
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-value">3</div>
+                    <div class="stat-card-label">Заданий</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-card-title">Средний балл</div>
+                        <div class="stat-card-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-value">8.5</div>
+                    <div class="stat-card-label">Из 10</div>
+                </div>
+            </div>
+            
+            <!-- Upcoming Assignments Section -->
+            <div class="assignments-container">
+                <div class="assignments-header">
+                    <div class="assignments-title">Предстоящие задания</div>
+                    <div class="assignments-filter">
+                        <button class="filter-btn active">Все</button>
+                        <button class="filter-btn">Скоро дедлайн</button>
+                        <button class="filter-btn">Выполненные</button>
+                    </div>
+                </div>
+                
+                <div class="student-assignments-list">
+                    <div class="assignment-card">
+                        <div class="assignment-header">
+                            <h3 class="assignment-title">Операции с матрицами</h3>
+                            <span class="due-date">Сдать завтра</span>
+                        </div>
+                        <p class="assignment-description">Основные операции с матрицами: сложение, вычитание, умножение и нахождение обратных матриц.</p>
+                        <div class="assignment-info">
+                            <span class="due-date"><i class="fas fa-calendar"></i> Срок: 20 окт, 2023</span>
+                            <span class="points"><i class="fas fa-star"></i> Макс. баллов: 10</span>
+                        </div>
+                        <div class="assignment-actions">
+                            <div class="assignment-details">
+                                <button class="btn btn-outline details-btn" onclick="window.location.href='#'">Подробнее</button>
+                            </div>
+                            <button class="upload-btn" onclick="window.location.href='submit-solution.html?id=1'">
+                                <i class="fas fa-cloud-upload-alt"></i> Отправить решение
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="assignment-card">
+                        <div class="assignment-header">
+                            <h3 class="assignment-title">Собственные значения и собственные векторы</h3>
+                            <span class="due-date">Срок через 7 дней</span>
+                        </div>
+                        <p class="assignment-description">Нахождение собственных значений и собственных векторов матриц, понимание их геометрической интерпретации.</p>
+                        <div class="assignment-info">
+                            <span class="due-date"><i class="fas fa-calendar"></i> Срок: 26 окт, 2023</span>
+                            <span class="points"><i class="fas fa-star"></i> Макс. баллов: 15</span>
+                        </div>
+                        <div class="assignment-actions">
+                            <div class="assignment-details">
+                                <button class="btn btn-outline details-btn" onclick="window.location.href='#'">Подробнее</button>
+                            </div>
+                            <button class="upload-btn" onclick="window.location.href='submit-solution.html?id=2'">
+                                <i class="fas fa-cloud-upload-alt"></i> Отправить решение
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="assignment-card">
+                        <div class="assignment-header">
+                            <h3 class="assignment-title">Линейные преобразования</h3>
+                            <span class="due-date">Срок через 14 дней</span>
+                        </div>
+                        <p class="assignment-description">Понимание и реализация линейных преобразований в двух и трех измерениях.</p>
+                        <div class="assignment-info">
+                            <span class="due-date"><i class="fas fa-calendar"></i> Срок: 3 ноя, 2023</span>
+                            <span class="points"><i class="fas fa-star"></i> Макс. баллов: 10</span>
+                        </div>
+                        <div class="assignment-actions">
+                            <div class="assignment-details">
+                                <button class="btn btn-outline details-btn" onclick="window.location.href='#'">Подробнее</button>
+                            </div>
+                            <button class="upload-btn" onclick="window.location.href='submit-solution.html?id=3'">
+                                <i class="fas fa-cloud-upload-alt"></i> Отправить решение
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Submissions Section -->
+            <div class="assignments-container">
+                <div class="assignments-header">
+                    <div class="assignments-title">Последние отправки</div>
+                    <div class="tab-buttons">
+                        <button class="tab-btn active">Все</button>
+                        <button class="tab-btn">Оцененные</button>
+                        <button class="tab-btn">В ожидании</button>
+                    </div>
+                </div>
+                
+                <div class="student-submissions-list">
+                    <div class="submission-card" onclick="window.location.href='#'">
+                        <div class="submission-header">
+                            <h3 class="submission-title">Векторные пространства</h3>
+                            <span class="submission-date">Отправлено: 1 мая, 2023</span>
+                        </div>
+                        <div class="submission-info">
+                            <span class="submission-status graded">Оценка: 8.5/10</span>
+                            <span class="feedback-available"><i class="fas fa-comment"></i> Есть отзыв</span>
+                        </div>
+                    </div>
+                    
+                    <div class="submission-card" onclick="window.location.href='#'">
+                        <div class="submission-header">
+                            <h3 class="submission-title">Определители</h3>
+                            <span class="submission-date">Отправлено: 24 апр, 2023</span>
+                        </div>
+                        <div class="submission-info">
+                            <span class="submission-status graded">Оценка: 10/10</span>
+                            <span class="feedback-available"><i class="fas fa-comment"></i> Есть отзыв</span>
+                        </div>
+                    </div>
+                    
+                    <div class="submission-card" onclick="window.location.href='#'">
+                        <div class="submission-header">
+                            <h3 class="submission-title">Системы линейных уравнений</h3>
+                            <span class="submission-date">Отправлено: 17 апр, 2023</span>
+                        </div>
+                        <div class="submission-info">
+                            <span class="submission-status graded">Оценка: 8.5/10</span>
+                            <span class="feedback-available"><i class="fas fa-comment"></i> Есть отзыв</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Student dashboard DOM loaded, initializing...');
+            
+            // Make sure we have app.js loaded
+            if (typeof checkAuthStatus !== 'function') {
+                console.error('app.js not loaded properly! checkAuthStatus function not found.');
+                // Try to load app.js
+                const script = document.createElement('script');
+                script.src = 'app.js';
+                script.onload = function() {
+                    console.log('app.js loaded dynamically');
+                    if (typeof checkAuthStatus === 'function') {
+                        checkAuthStatus();
+                        setupRefreshButton();
+                    }
+                };
+                document.head.appendChild(script);
+            } else {
+                // app.js is loaded, proceed with initialization
+                checkAuthStatus();
+                setupRefreshButton();
+            }
+            
+            // Setup the refresh stats button
+            function setupRefreshButton() {
+                const refreshBtn = document.getElementById('refreshStatsBtn');
+                if (refreshBtn) {
+                    refreshBtn.addEventListener('click', function() {
+                        console.log('Refreshing student dashboard stats...');
+                        if (typeof updateStudentDashboardStats === 'function') {
+                            // Ensure we have current user
+                            if (currentUser && currentUser.email) {
+                                const studentEmail = currentUser.email;
+                                const studentSubmissions = submissions.filter(sub => sub.studentEmail === studentEmail);
+                                const submittedAssignmentIds = studentSubmissions.map(sub => sub.assignmentId);
+                                const availableAssignments = assignments.filter(assignment => !submittedAssignmentIds.includes(assignment.id));
+                                
+                                // Update the dashboard stats
+                                updateStudentDashboardStats(studentSubmissions, availableAssignments);
+                                
+                                // Show a subtle notification
+                                this.innerHTML = '<i class="fas fa-check"></i> Обновлено!';
+                                this.style.color = '#28a745';
+                                
+                                // Reset button after 2 seconds
+                                setTimeout(() => {
+                                    this.innerHTML = '<i class="fas fa-sync-alt"></i> Обновить статистику';
+                                    this.style.color = 'rgba(255,255,255,0.6)';
+                                }, 2000);
+                            } else {
+                                console.error('Cannot refresh stats: no current user');
+                            }
+                        } else {
+                            console.error('updateStudentDashboardStats function not found');
+                        }
+                    });
+                }
+            }
+            
+            // Handle refresh button click for manual updates
+            const refreshButton = document.createElement('button');
+            refreshButton.className = 'btn btn-primary refresh-btn';
+            refreshButton.innerHTML = '<i class="fas fa-sync-alt"></i> Обновить';
+            refreshButton.style.position = 'fixed';
+            refreshButton.style.bottom = '20px';
+            refreshButton.style.right = '20px';
+            refreshButton.style.zIndex = '1000';
+            refreshButton.style.padding = '10px 15px';
+            refreshButton.style.borderRadius = '5px';
+            refreshButton.style.backgroundColor = '#e74c3c';
+            refreshButton.style.color = '#fff';
+            refreshButton.style.border = 'none';
+            refreshButton.style.cursor = 'pointer';
+            
+            refreshButton.addEventListener('click', function() {
+                console.log('Manual refresh requested');
+                if (typeof syncAssignmentsAndSubmissions === 'function' && typeof loadStudentDashboard === 'function') {
+                    syncAssignmentsAndSubmissions();
+                    loadStudentDashboard();
+                    alert('Панель обновлена с последними заданиями!');
+                } else {
+                    alert('Ошибка: Необходимые функции не найдены. Пожалуйста, перезагрузите страницу.');
+                }
+            });
+            
+            document.body.appendChild(refreshButton);
+            
+            // File upload functionality for submission modal
+            const solutionFileInput = document.getElementById('solutionFile');
+            const selectedSolution = document.getElementById('selectedSolution');
+            const solutionFileName = document.getElementById('solutionFileName');
+            const removeSolution = document.getElementById('removeSolution');
+            
+            // Initially hide the selected file section
+            if (selectedSolution) {
+                selectedSolution.style.display = 'none';
+            }
+            
+            // Handle file selection
+            if (solutionFileInput) {
+                solutionFileInput.addEventListener('change', function() {
+                    if (this.files.length > 0) {
+                        const fileName = this.files[0].name;
+                        solutionFileName.textContent = fileName;
+                        selectedSolution.style.display = 'flex';
+                        console.log(`File selected: ${fileName}`);
+                    } else {
+                        solutionFileName.textContent = 'No file selected';
+                        selectedSolution.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Handle file removal
+            if (removeSolution) {
+                removeSolution.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    solutionFileInput.value = '';
+                    solutionFileName.textContent = 'No file selected';
+                    selectedSolution.style.display = 'none';
+                    console.log('File removed');
+                });
+            }
+            
+            // Modal handling
+            const submitAssignmentModal = document.getElementById('submitAssignmentModal');
+            const viewSubmissionModal = document.getElementById('viewSubmissionModal');
+            const submitAssignmentForm = document.getElementById('submitAssignmentForm');
+            
+            // Close modals when clicking close buttons
+            document.querySelectorAll('.close-modal, .cancel-btn, .close-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (submitAssignmentModal) submitAssignmentModal.classList.remove('active');
+                    if (viewSubmissionModal) viewSubmissionModal.classList.remove('active');
+                });
+            });
+            
+            // Handle assignment submission
+            if (submitAssignmentForm) {
+                submitAssignmentForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const assignmentId = parseInt(this.dataset.assignmentId);
+                    const solutionFile = solutionFileInput.files[0];
+                    const notes = document.getElementById('submissionNotes').value;
+                    
+                    if (!solutionFile) {
+                        alert('Пожалуйста, загрузите файл с вашим решением перед отправкой.');
+                        return;
+                    }
+                    
+                    console.log(`Submitting assignment ${assignmentId}`);
+                    console.log(`File: ${solutionFile.name}, Notes: ${notes}`);
+                    
+                    // Use the global function from app.js
+                    const newSubmission = submitDemoSolution(assignmentId, {
+                        file: solutionFile,
+                        notes: notes
+                    });
+                    
+                    if (newSubmission) {
+                        // Close modal and reset form
+                        submitAssignmentModal.classList.remove('active');
+                        submitAssignmentForm.reset();
+                        selectedSolution.style.display = 'none';
+                        
+                        // Show success message
+                        alert('Задание успешно отправлено!');
+                        
+                        // Reload the dashboard to reflect changes
+                        loadStudentDashboard();
+                    } else {
+                        alert('Ошибка при отправке задания. Пожалуйста, попробуйте снова.');
+                    }
+                });
+            }
+            
+            // Initialize submission modal
+            const submitModal = document.getElementById('submitAssignmentModal');
+            const closeButtons = document.querySelectorAll('.close-modal, .cancel-btn');
+            
+            // Ensure form is reset on modal close
+            closeButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (submitModal) {
+                        submitModal.classList.remove('active');
+                        const form = document.getElementById('submitAssignmentForm');
+                        if (form) form.reset();
+                        const selectedSolution = document.getElementById('selectedSolution');
+                        if (selectedSolution) selectedSolution.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Add CSS fix to make modal visible when active class is applied
+            const style = document.createElement('style');
+            style.textContent = `
+                .modal.active {
+                    display: flex !important;
+                    opacity: 1 !important;
+                    visibility: visible !important;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Fix for assignment submission buttons
+            document.querySelectorAll('.submit-assignment-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Get assignment ID from the button's data attribute
+                    const assignmentId = this.dataset.assignmentId;
+                    
+                    // Set the assignment ID in the form
+                    const submitForm = document.getElementById('submitAssignmentForm');
+                    if (submitForm) {
+                        submitForm.dataset.assignmentId = assignmentId;
+                    }
+                    
+                    // Show the modal
+                    const modal = document.getElementById('submitAssignmentModal');
+                    if (modal) {
+                        modal.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
+    
+    <!-- Modal for submitting assignment -->
+    <div class="modal" id="submitAssignmentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Отправка задания</h2>
+                <button class="close-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="submitAssignmentForm" data-assignment-id="">
+                    <div class="form-group">
+                        <label for="solutionFile">Загрузите ваше решение (файл .ipynb)</label>
+                        <div class="file-upload-container">
+                            <label for="solutionFile" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Выбрать файл</span>
+                            </label>
+                            <input type="file" id="solutionFile" accept=".ipynb" class="file-upload-input">
+                            <div id="selectedSolution" class="selected-file">
+                                <span id="solutionFileName">Файл не выбран</span>
+                                <button type="button" id="removeSolution"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+                        <p class="help-text">Пожалуйста, загрузите файл Jupyter Notebook (.ipynb), содержащий ваше решение.</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="submissionNotes">Комментарии (необязательно)</label>
+                        <textarea id="submissionNotes" rows="4" placeholder="Добавьте любые заметки или комментарии к вашему решению..."></textarea>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-outline cancel-btn">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Отправить задание</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for viewing submission details -->
+    <div class="modal" id="viewSubmissionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Детали отправки</h2>
+                <button class="close-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="submission-detail-header">
+                    <h3 id="viewSubmissionTitle">Название задания</h3>
+                    <div id="viewSubmissionStatus"></div>
+                </div>
+                
+                <div class="submission-detail-info">
+                    <div class="detail-group">
+                        <label>Отправлено:</label>
+                        <div id="viewSubmissionDate">1 января, 2023</div>
+                    </div>
+                    
+                    <div class="detail-group">
+                        <label>Отправленный файл:</label>
+                        <div id="viewSubmissionFile">solution.ipynb</div>
+                    </div>
+                    
+                    <div class="detail-group" id="viewSubmissionScoreContainer">
+                        <label>Оценка:</label>
+                        <div class="score-display">
+                            <div id="viewSubmissionScore">8/10</div>
+                            <div class="confidence">
+                                <span>Точность ИИ:</span>
+                                <span id="viewSubmissionConfidence">85%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-group" id="viewSubmissionFeedbackContainer">
+                        <label>Обратная связь:</label>
+                        <div class="feedback-container" id="viewSubmissionFeedback">
+                            Отлично выполненная работа, ваше решение демонстрирует хорошее понимание концепций.
+                            Есть незначительные улучшения, которые можно внести в эффективность вашего алгоритма.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline close-btn">Закрыть</button>
+                    <button type="button" class="btn btn-primary download-btn">Скачать решение</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add debug button -->
+    <button id="debugButton" onclick="debugModal()">Debug Submit Modal</button>
+
+    <script>
+        function debugModal() {
+            const modal = document.getElementById('submitAssignmentModal');
+            if (modal) {
+                modal.classList.add('active');
+                console.log('Modal opened through debug button');
+            } else {
+                console.error('Modal element not found');
+            }
+        }
+        
+        // Функция для перевода видимых кнопок на странице
+        function translateVisibleButtons() {
+            console.log('Translating visible buttons...');
+            
+            // Ищем все кнопки с текстом 'VIEW DETAILS'
+            document.querySelectorAll('button').forEach(button => {
+                if (button.innerText === 'VIEW DETAILS') {
+                    button.innerHTML = '<i class="fas fa-eye"></i> ПОДРОБНОСТИ';
+                }
+                if (button.innerText === 'Submit Solution') {
+                    button.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> ОТПРАВИТЬ РЕШЕНИЕ';
+                }
+            });
+            
+            // Ищем все кнопки в карточках заданий
+            document.querySelectorAll('.view-details-btn').forEach(button => {
+                button.innerHTML = '<i class="fas fa-eye"></i> ПОДРОБНОСТИ';
+            });
+            
+            document.querySelectorAll('.submit-solution-btn').forEach(button => {
+                button.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> ОТПРАВИТЬ РЕШЕНИЕ';
+            });
+            
+            // Заменяем текст в VIEW DETAILS кнопке в дочерних элементах
+            document.querySelectorAll('.view-detailed button').forEach(button => {
+                button.innerHTML = 'ПОДРОБНОСТИ';
+            });
+        }
+        
+        // Переводим кнопки сразу и через 1 и 2 секунды после загрузки
+        document.addEventListener('DOMContentLoaded', function() {
+            translateVisibleButtons();
+            setTimeout(translateVisibleButtons, 1000);
+            setTimeout(translateVisibleButtons, 2000);
+        });
+        
+        // Переводим кнопки каждые 3 секунды для обновления после возможных изменений в DOM
+        setInterval(translateVisibleButtons, 3000);
+    </script>
+</body>
+</html> 

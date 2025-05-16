@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const ErrorResponse = require('../utils/errorResponse');
 const sendEmail = require('../utils/sendEmail');
 const User = require('../models/User');
+const nodemailer = require('nodemailer');
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -43,23 +44,47 @@ exports.register = async (req, res, next) => {
             <a href="${verificationUrl}" target="_blank">Verify Email</a>
         `;
         
+        let emailPreviewUrl = null;
+        
         try {
-            await sendEmail({
+            const emailInfo = await sendEmail({
                 to: user.email,
                 subject: 'ProofMate - Email Verification',
                 html: message
             });
             
-            sendTokenResponse(user, 200, res);
+            emailPreviewUrl = nodemailer.getTestMessageUrl(emailInfo);
+            console.log(`Verification email sent to: ${user.email}`);
+            console.log(`Preview URL: ${emailPreviewUrl}`);
         } catch (err) {
-            console.log(err);
-            user.emailVerificationToken = undefined;
-            user.emailVerificationTokenExpire = undefined;
-            
-            await user.save({ validateBeforeSave: false });
-            
-            return next(new ErrorResponse('Email could not be sent', 500));
+            console.log(`Warning: Email could not be sent to ${user.email}`, err);
+            // We'll continue with registration even if email fails
         }
+        
+        // Add email preview URL to response in development mode
+        const responseData = {
+            success: true,
+            token: user.getSignedJwtToken(),
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                institution: user.institution,
+                emailVerified: user.emailVerified
+            }
+        };
+        
+        // Add email preview URL for development
+        if (process.env.NODE_ENV === 'development' && emailPreviewUrl) {
+            responseData.emailVerification = {
+                message: 'For development: Use this link to verify your email',
+                previewUrl: emailPreviewUrl
+            };
+        }
+        
+        // Send token response
+        sendTokenResponse(user, 200, res, responseData);
     } catch (err) {
         next(err);
     }
@@ -72,6 +97,8 @@ exports.login = async (req, res, next) => {
     try {
         const { email, password, role } = req.body;
         
+        console.log(`Login attempt for email: ${email}, role: ${role}`);
+        
         // Validate email & password
         if (!email || !password) {
             return next(new ErrorResponse('Please provide an email and password', 400));
@@ -81,23 +108,32 @@ exports.login = async (req, res, next) => {
         const user = await User.findOne({ email }).select('+password');
         
         if (!user) {
+            console.log(`Login failed: No user found with email ${email}`);
             return next(new ErrorResponse('Invalid credentials', 401));
         }
         
+        console.log(`User found with role: ${user.role}, requested role: ${role}`);
+        
         // Check if role matches
         if (role && user.role !== role) {
+            console.log(`Login failed: Role mismatch. Account is ${user.role}, requested ${role}`);
             return next(new ErrorResponse(`This account is registered as a ${user.role}. Please select the correct role.`, 401));
         }
         
         // Check if password matches
         const isMatch = await user.matchPassword(password);
         
+        console.log(`Password match result: ${isMatch}`);
+        
         if (!isMatch) {
+            console.log(`Login failed: Invalid password for ${email}`);
             return next(new ErrorResponse('Invalid credentials', 401));
         }
         
+        console.log(`Login successful for ${email}`);
         sendTokenResponse(user, 200, res);
     } catch (err) {
+        console.error(`Login error: ${err.message}`);
         next(err);
     }
 };
@@ -160,15 +196,24 @@ exports.forgotPassword = async (req, res, next) => {
         `;
         
         try {
-            await sendEmail({
+            const emailInfo = await sendEmail({
                 to: user.email,
                 subject: 'Password Reset Token',
                 html: message
             });
             
-            res.status(200).json({ success: true, data: 'Email sent' });
+            // Return both success and the email preview URL for development
+            res.status(200).json({ 
+                success: true, 
+                data: 'Email sent',
+                // Include the preview URL in development mode only
+                ...(process.env.NODE_ENV === 'development' && { 
+                    previewUrl: nodemailer.getTestMessageUrl(emailInfo),
+                    message: 'This is a development preview URL. In production, the email would be delivered to the user.'
+                })
+            });
         } catch (err) {
-            console.log(err);
+            console.log('Email sending error:', err);
             user.resetPasswordToken = undefined;
             user.resetPasswordExpire = undefined;
             
@@ -251,7 +296,7 @@ exports.verifyEmail = async (req, res, next) => {
 };
 
 // Helper function to get token from model, create cookie and send response
-const sendTokenResponse = (user, statusCode, res) => {
+const sendTokenResponse = (user, statusCode, res, additionalData = {}) => {
     // Create token
     const token = user.getSignedJwtToken();
     
@@ -279,6 +324,7 @@ const sendTokenResponse = (user, statusCode, res) => {
                 role: user.role,
                 institution: user.institution,
                 emailVerified: user.emailVerified
-            }
+            },
+            ...additionalData
         });
 }; 

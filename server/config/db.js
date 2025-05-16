@@ -2,7 +2,10 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
     try {
-        const conn = await mongoose.connect(process.env.MONGODB_URI, {
+        // Add fallback URI in case env variable is not loaded
+        const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/proofmate';
+        
+        const conn = await mongoose.connect(uri, {
             useNewUrlParser: true,
             useUnifiedTopology: true
         });
